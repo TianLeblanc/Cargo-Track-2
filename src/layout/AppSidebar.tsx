@@ -8,9 +8,11 @@ import {
   BoxCubeIcon,
   CalenderIcon,
   ChevronDownIcon,
+  FileIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
+  MailIcon,
   PageIcon,
   PieChartIcon,
   PlugInIcon,
@@ -29,12 +31,21 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    subItems: [{ name: "Ecommerce", path: "/"}],
   },
+
   {
+    icon: <MailIcon />,
+    name: "Casillero",
+    subItems: [{ name: "Paquete",  path: "/p"},],
+    
+  },  
+
+  {
+  
     icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
+    name: "Almacen",
+    path: "/almacen",
   },
   {
     icon: <UserCircleIcon />,

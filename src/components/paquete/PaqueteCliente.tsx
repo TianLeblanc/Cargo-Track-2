@@ -12,35 +12,39 @@ import Image from "next/image";
 interface Product {
   id: number; // Unique identifier for each product
   name: string; // Product name
-  variants: string; // Number of variants (e.g., "1 Variant", "2 Variants")
+  //variants: string; // Number of variants (e.g., "1 Variant", "2 Variants")
   category: string; // Category of the product
-  price: string; // Price of the product (as a string with currency symbol)
   // status: string; // Status of the product
-  image: string; // URL or path to the product image
-  status: "Delivered" | "Pending" | "Canceled"; // Status of the product
+  
+  status: "Pendiente" | "Entregado" | "Cancelado"; // Status of the product
 }
 
 // Define the table data using the interface
 const tableData: Product[] = [
   {
+    id: 1,
+    name: "RR123456789UY",
+    //variants: "1 Variant",
+    category: "cafecito con pan",
+    status: "Pendiente"
+  },
+  {
     id: 2,
-    name: "Apple Watch Ultra",
-    variants: "1 Variant",
-    category: "Watch",
-    price: "$879.00",
-    status: "Pending",
-    image: "/images/product/product-02.jpg", // Replace with actual image URL
+    name: "RR123454489UY",
+    //variants: "1 Variant",
+    category: "quesitos sin almendras",
+    status: "Entregado"
   }
 ];
  
 
-export default function RecentOrders() {
+export default function PaqueteCliente() {
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Recent Orders
+           Casillero
           </h3>
         </div>
 
@@ -81,10 +85,10 @@ export default function RecentOrders() {
                 strokeWidth="1.5"
               />
             </svg>
-            Filter
+            Filtrar
           </button>
           <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
-            See all
+            Ver todo
           </button>
         </div>
       </div>
@@ -95,27 +99,23 @@ export default function RecentOrders() {
             <TableRow>
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                className="py-3 font-medium text-gray-900 text-start text-theme-xs dark:text-gray-200"
               >
-                Products
+                # De Guía
               </TableCell>
+
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                className="py-3 font-medium text-gray-900 text-start text-theme-xs dark:text-gray-200"
               >
-                Price
+                Descripción
               </TableCell>
+
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                className="py-3 font-medium text-gray-900 text-start text-theme-xs dark:text-gray-200"
               >
-                Category
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Status
+                Estado del envío
               </TableCell>
             </TableRow>
           </TableHeader>
@@ -127,38 +127,27 @@ export default function RecentOrders() {
               <TableRow key={product.id} className="">
                 <TableCell className="py-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-[50px] w-[50px] overflow-hidden rounded-md">
-                      <Image
-                        width={50}
-                        height={50}
-                        src={product.image}
-                        className="h-[50px] w-[50px]"
-                        alt={product.name}
-                      />
-                    </div>
                     <div>
                       <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
                         {product.name}
                       </p>
-                      <span className="text-gray-500 text-theme-xs dark:text-gray-400">
-                        {product.variants}
+                      <span className="text-gray-700 text-theme-xs dark:text-gray-400">
+                        pepentin
                       </span>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {product.price}
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                
+                <TableCell className="py-3 text-gray-700 text-theme-sm dark:text-gray-400">
                   {product.category}
                 </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                <TableCell className="py-3 text-gray-600 text-theme-sm dark:text-gray-400">
                   <Badge
                     size="sm"
                     color={
-                      product.status === "Delivered"
+                      product.status === "Entregado"
                         ? "success"
-                        : product.status === "Pending"
+                        : product.status === "Pendiente"
                         ? "warning"
                         : "error"
                     }
