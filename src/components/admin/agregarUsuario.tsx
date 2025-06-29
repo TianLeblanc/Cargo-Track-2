@@ -1,27 +1,18 @@
 "use client";
-import React from "react";
-import ComponentCard from "../../common/ComponentCard";
-import Button from "../../ui/button/Button";
-import { Modal } from "../../ui/modal";
-import Label from "../../form/Label";
-import Input from "../../form/input/InputField";
+import React, { useState } from 'react';
+import ComponentCard from '@/components/common/ComponentCard';
+import Label from '@/components/form/Label';
+import Input from '@/components/form/input/InputField';
+import Select from '@/components/form/Select';
+import { Modal } from '@/components/ui/modal';
 import { useModal } from "@/hooks/useModal";
+import FormInModal from '@/components/example/ModalExample/FormInModal';
 import { ChevronDownIcon} from '@/icons';
+import Button from '../ui/button/Button';
 
-export default function FormInModal() {
-  const { isOpen, openModal, closeModal } = useModal();
-  const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving changes...");
-    closeModal();
-  };
+export default function AgregarUsuario() {
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={closeModal}
-      className="max-w-[584px] p-5 lg:p-10"
-    >
-      <form className="space-y-5">
+    <form className="space-y-5">
         {/* Sección de nombres */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
@@ -133,6 +124,5 @@ export default function FormInModal() {
           </button>
         </div>
       </form>
-    </Modal>
   );
 }

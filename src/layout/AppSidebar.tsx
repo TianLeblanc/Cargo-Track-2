@@ -8,7 +8,6 @@ import {
   BoxCubeIcon,
   CalenderIcon,
   ChevronDownIcon,
-  FileIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
@@ -18,6 +17,7 @@ import {
   PlugInIcon,
   TableIcon,
   UserCircleIcon,
+  GroupIcon,
 } from "../icons/index";
 // 
 type NavItem = {
@@ -28,49 +28,36 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  {
-    icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/"}],
-  },
 
   {
     icon: <MailIcon />,
     name: "Casillero",
-    subItems: [{ name: "Paquete",  path: "/p"},],
-    
-  },  
+    subItems: [
+      { name: "Paquete",  path: "/Paquetes"}, 
+      {name: "Facturas", path:"/Facturas"},
+      {name: "Envios", path:"/Envios"},
+    ],
+  },
 
   {
   
     icon: <CalenderIcon />,
     name: "Almacen",
-    path: "/almacen",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
+    path: "/Almacenes",
   },
 
   {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+    icon: <GroupIcon />,
+    name: "Lista de Usuarios",
+    path :"/Usuarios"
   },
+  
+
   {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
-    ],
-  },
+    icon: <UserCircleIcon />,
+    name: "Perfil de Usuario",
+    path: "/profile",
+  }
 ];
 
 const othersItems: NavItem[] = [
@@ -100,6 +87,24 @@ const othersItems: NavItem[] = [
     subItems: [
       { name: "Sign In", path: "/signin", pro: false },
       { name: "Sign Up", path: "/signup", pro: false },
+    ],
+  },
+  {
+    name: "Forms",
+    icon: <ListIcon />,
+    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+  },
+  {
+    name: "Tables",
+    icon: <TableIcon />,
+    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+  },
+  {
+    name: "Pages",
+    icon: <PageIcon />,
+    subItems: [
+      { name: "Blank Page", path: "/blank", pro: false },
+      { name: "404 Error", path: "/error-404", pro: false },
     ],
   },
 ];
