@@ -80,7 +80,7 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
           },
         ] as Marker[]
       }
-      zoomOnScroll={false}
+      zoomOnScroll={true}
       zoomMax={12}
       zoomMin={1}
       zoomAnimate={true}
