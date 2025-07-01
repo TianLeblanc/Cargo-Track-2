@@ -103,7 +103,7 @@ export default function EnviosTabla() {
         </Button>
       </div>
 
-      {/* Modal para nueva factura */}
+      {/* Modal para nueva Envio */}
       <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] max-h-[650px] m-4">
         <div className="relative flex h-full max-h-[650px] flex-col overflow-hidden rounded-3xl bg-white dark:bg-gray-900 p-4 lg:p-11">
 

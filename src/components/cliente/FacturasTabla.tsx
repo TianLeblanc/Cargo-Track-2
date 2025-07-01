@@ -6,15 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import Link from "next/link"
-import { useModal } from "../../hooks/useModal";
-import { Modal } from "../ui/modal";
-import Button from "@/components/ui/button/Button";
-import Label from '@/components/form/Label';
-import TextArea from "@/components/form/input/TextArea";
-import Input from '@/components/form/input/InputField';
-import Select from "@/components/form/Select";
-import PlusIcon from "@/icons/plus.svg"
+import Link from "next/link";
 
 // Define la interfaz TypeScript para las facturas
 interface Factura {
@@ -66,21 +58,7 @@ const facturasData: Factura[] = [
   }
 ];
 
-const metodosPago = [
-  { value: "transferencia", label: "Transferencia" },
-  { value: "efectivo", label: "Efectivo" },
-  { value: "tarjeta", label: "Tarjeta" },
-  { value: "cheque", label: "Cheque" }
-];
-
 export default function FacturasTabla() {
-  const { isOpen, openModal, closeModal } = useModal();
-  
-  const handleSave = () => {
-    console.log("Guardando factura...");
-    closeModal();
-  };
-
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
@@ -88,107 +66,11 @@ export default function FacturasTabla() {
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
             Facturas
           </h3>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button onClick={openModal} size="sm" variant="primary" startIcon={<PlusIcon />}>
-            Nueva Factura
-          </Button>
-          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
-            Ver todo
-          </button>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Visualización de facturas registradas
+          </p>
         </div>
       </div>
-
-      {/* Modal para nueva factura */}
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] max-h-[650px] m-4">
-        <div className="relative flex h-full max-h-[650px] flex-col overflow-hidden rounded-3xl bg-white dark:bg-gray-900 p-4 lg:p-11">
-
-          {/* Header */}
-          <div className="px-2 pr-14 flex-shrink-0">
-            <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Nueva Factura
-            </h4>
-            <p className="mb-6 text-md text-gray-500 dark:text-gray-400 lg:mb-7">
-              Complete los datos de la factura.
-            </p>
-          </div>
-
-          {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-3">
-            <form className="flex flex-col">
-              <div className="mt-7">
-                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
-                  Información de Factura
-                </h5>
-
-                <div className="grid grid-cols-1 gap-x-5 gap-y-5 lg:grid-cols-2">
-                  <div>
-                    <Label>Estado</Label>
-                    <Select
-                      options={[
-                        { value: "generado", label: "Generado" },
-                        { value: "pagado", label: "Pagado" },
-                      ]}
-                      placeholder="Seleccione estado"
-                      onChange={(option) => {
-                        console.log("Estado seleccionado:", option)
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Método de Pago</Label>
-                    <Select
-                      options={metodosPago}
-                      placeholder="Seleccione método"
-                      onChange={(option) => {
-                        console.log("Metodo de Pago", option)
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Monto Total</Label>
-                    <Input type="number" />
-                  </div>
-
-                  <div>
-                    <Label>Fecha</Label>
-                    <Input type="date" />
-                  </div>
-
-                  <div>
-                    <Label>Cantidad de Piezas</Label>
-                    <Input type="number" />
-                  </div>
-
-                  <div>
-                    <Label>Cantidad de Paquetes</Label>
-                    <Input type="number" />
-                  </div>
-
-                  <div className="col-span-2">
-                    <Label>Notas</Label>
-                    <TextArea rows={3} />
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-
-          {/* Footer */}
-          <div className="flex-shrink-0 px-2 mt-6 flex items-center gap-3 lg:justify-end">
-            <Button size="sm" variant="outline" onClick={closeModal}>
-              Cancelar
-            </Button>
-            <Button size="sm" onClick={handleSave}>
-              Guardar Factura
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
 
       {/* Tabla de facturas */}
       <div className="max-w-full overflow-x-auto">
@@ -220,7 +102,7 @@ export default function FacturasTabla() {
               </TableCell>
               
               <TableCell isHeader className="py-3 font-large text-gray-900 text-start text-theme-xs dark:text-gray-200">
-                Acciones
+                PDF
               </TableCell>
             </TableRow>
           </TableHeader>
@@ -264,21 +146,20 @@ export default function FacturasTabla() {
                 </TableCell>
                 
                 <TableCell className="py-3">
-                  <div className="flex gap-2">
-                    <Link 
-                      href={factura.pdfUrl}
-                      target="_blank"
-                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                    >
-                      Ver PDF
-                    </Link>
-                    <button 
-                      onClick={openModal}
-                      className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
-                    >
-                      Editar
-                    </button>
-                  </div>
+                  <Link 
+                    href={factura.pdfUrl}
+                    target="_blank"
+                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 inline-flex items-center gap-1"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M10 9H9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Ver
+                  </Link>
                 </TableCell>
               </TableRow>
             ))}
