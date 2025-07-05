@@ -1,15 +1,123 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Empleado {
+  cedula      String   @id
+  nombre      String
+  apellido    String
+  email       String
+  telefono    String
+  contrasena  String
+  esAdmin     Boolean
+
+  paquetes    Paquete[]
+  envios      Envio[]      @relation("EmpleadoEnvio")
+  facturas    Factura[]
+}
+
+model Cliente {
+  cedula      String   @id
+  nombre      String
+  apellido    String
+  email       String
+  telefono    String
+  contrasena  String
+
+  envios      Envio[]      @relation("ClienteEnvio")
+}
+
+model Almacen {
+  codigo         Int      @id @default(autoincrement())
+  telefono       String
+  linea1         String
+  linea2         String?
+  pais           String
+  estado         String
+  ciudad         String
+  codigoPostal   String
+
+  paquetes      Paquete[]
+  origenEnvios  Envio[]   @relation("OrigenAlmacen")
+  destinoEnvios Envio[]   @relation("DestinoAlmacen")
+}
+
+model Paquete {
+  codigo         Int      @id @default(autoincrement())
+  descripcion    String
+  largo          Float
+  ancho          Float
+  alto           Float
+  peso           Float
+  volumen        Float
+  almacenCodigo  Int
+  empleadoCedula String
+
+  almacen        Almacen  @relation(fields: [almacenCodigo], references: [codigo])
+  empleado       Empleado @relation(fields: [empleadoCedula], references: [cedula])
+  incluye        Incluye[]
+}
+
+model Envio {
+  numero         Int      @id @default(autoincrement())
+  tipo           String
+  estado         String
+  tracking       String
+  fechaSalida    DateTime
+  fechaLlegada   DateTime?
+  origenCodigo   Int
+  destinoCodigo  Int
+  empleadoCedula String
+  clienteCedula  String
+
+  origen         Almacen  @relation("OrigenAlmacen", fields: [origenCodigo], references: [codigo])
+  destino        Almacen  @relation("DestinoAlmacen", fields: [destinoCodigo], references: [codigo])
+  empleado       Empleado @relation("EmpleadoEnvio", fields: [empleadoCedula], references: [cedula])
+  cliente        Cliente  @relation("ClienteEnvio", fields: [clienteCedula], references: [cedula])
+  incluye        Incluye[]
+  facturas       Factura[]
+}
+
+model Incluye {
+  envioNumero   Int
+  paqueteCodigo Int
+
+  envio         Envio   @relation(fields: [envioNumero], references: [numero])
+  paquete       Paquete @relation(fields: [paqueteCodigo], references: [codigo])
+
+  @@id([envioNumero, paqueteCodigo])
+}
+
+model Factura {
+  numero         Int      @id @default(autoincrement())
+  estado         String
+  metodoPago     String
+  monto          Float
+  cantidadPiezas Int
+  envioNumero    Int
+  empleadoCedula String
+
+  envio          Envio    @relation(fields: [envioNumero], references: [numero])
+  empleado       Empleado @relation(fields: [empleadoCedula], references: [cedula])
+  detalles       DetalleFactura[]
+}
+
+model DetalleFactura {
+  numero         Int    @id @default(autoincrement())
+  montoCalculado Float
+  facturaNumero  Int
+
+  factura        Factura @relation(fields: [facturaNumero], references: [numero])
+}
+
+
+enum Status {
+  active
+  inactive
+  archived
 }

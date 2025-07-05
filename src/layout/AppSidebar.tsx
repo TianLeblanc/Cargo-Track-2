@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   BoxCubeIcon,
   CalenderIcon,
@@ -33,7 +34,7 @@ const navItems: NavItem[] = [
     icon: <MailIcon />,
     name: "Casillero",
     subItems: [
-      { name: "Paquete",  path: "/Paquetes"}, 
+      { name: "Paquetes",  path: "/Paquetes"}, 
       {name: "Facturas", path:"/Facturas"},
       {name: "Envios", path:"/Envios"},
     ],
@@ -110,6 +111,7 @@ const othersItems: NavItem[] = [
 ];
 
 const AppSidebar: React.FC = () => {
+  const { user } = useAuth();
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
 
@@ -330,14 +332,14 @@ const AppSidebar: React.FC = () => {
                 className="dark:hidden"
                 src="/images/logo/logo.svg"
                 alt="Logo"
-                width={150}
+                width={180}
                 height={40}
               />
               <Image
                 className="hidden dark:block"
                 src="/images/logo/logo-dark.svg"
                 alt="Logo"
-                width={150}
+                width={180}
                 height={40}
               />
             </>
@@ -346,15 +348,15 @@ const AppSidebar: React.FC = () => {
             <Image
               src="/images/logo/logo-icon.svg"
               alt="Logo"
-              width={32}
-              height={32}
+              width={40}
+              height={40}
               className="dark:hidden"
             />
             <Image
               src="/images/logo/logo-icon-dark.svg"
               alt="Logo"
-              width={32}
-              height={32}
+              width={40}
+              height={40}
               className="hidden dark:block"
             />
             </>
@@ -366,18 +368,21 @@ const AppSidebar: React.FC = () => {
           <div className="flex flex-col gap-4">
             <div>
               <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                className={`mb-4 text-sm uppercase flex leading-[30px] text-gray-400 ${
                   !isExpanded && !isHovered
                     ? "lg:justify-center"
                     : "justify-start"
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
+                  <div className=" text-gray-800 dark:text-gray-200"> 
+                    <span> ¡Bienvenido, {user?.name}!</span>
+                  </div>
                 ) : (
                   <HorizontaLDots />
                 )}
               </h2>
+              
               {renderMenuItems(navItems, "main")}
             </div>
 

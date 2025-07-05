@@ -94,14 +94,6 @@ export default function FacturasTabla() {
               </TableCell>
               
               <TableCell isHeader className="py-3 font-large text-gray-900 text-start text-theme-xs dark:text-gray-200">
-                Piezas/Paquetes
-              </TableCell>
-              
-              <TableCell isHeader className="py-3 font-large text-gray-900 text-start text-theme-xs dark:text-gray-200">
-                Monto x Paquete
-              </TableCell>
-              
-              <TableCell isHeader className="py-3 font-large text-gray-900 text-start text-theme-xs dark:text-gray-200">
                 PDF
               </TableCell>
             </TableRow>
@@ -135,14 +127,6 @@ export default function FacturasTabla() {
                 
                 <TableCell className="py-3 text-gray-700 text-theme-sm dark:text-gray-400">
                   {factura.metodoPago}
-                </TableCell>
-                
-                <TableCell className="py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                  {factura.cantidadPiezas} / {factura.cantidadPaquetes}
-                </TableCell>
-                
-                <TableCell className="py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                  ${factura.montoPorPaquete.toFixed(2)}
                 </TableCell>
                 
                 <TableCell className="py-3">
