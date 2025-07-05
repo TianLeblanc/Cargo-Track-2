@@ -14,6 +14,8 @@ import Label from '@/components/form/Label';
 import Select from "@/components/form/Select";
 import Input from '@/components/form/input/InputField';
 import { ChevronDownIcon} from "@/icons";
+import { EyeIcon } from "lucide-react";
+import React, { useState } from "react";
 
 interface Envio {
   id: string;
@@ -80,6 +82,18 @@ const tiposEnvio = [
 
 export default function EnviosTabla() {
   const { isOpen, openModal, closeModal } = useModal();
+  const [selectedEnvio, setSelectedEnvio] = useState<Envio | null>(null);
+  const [showDetallesModal, setShowDetallesModal] = useState(false);
+
+  const openDetallesModal = (envio: Envio) => {
+    setSelectedEnvio(envio);
+    setShowDetallesModal(true);
+  };
+
+  const closeDetallesModal = () => {
+    setSelectedEnvio(null);
+    setShowDetallesModal(false);
+  };
   
   const handleSave = () => {
     console.log("Guardando envío...");
@@ -218,27 +232,27 @@ export default function EnviosTabla() {
         <Table>
           <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
             <TableRow>
-              <TableCell isHeader className="py-3 text-start">
+              <TableCell isHeader className="py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-400">
                 Código
               </TableCell>
               
-              <TableCell isHeader className="py-3 text-start">
+              <TableCell isHeader className="py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-400">
                 Tipo
               </TableCell>
               
-              <TableCell isHeader className="py-3 text-start">
+              <TableCell isHeader className="py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-400">
                 Origen → Destino
               </TableCell>
               
-              <TableCell isHeader className="py-3 text-start">
+              <TableCell isHeader className="py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-400">
                 Fechas
               </TableCell>
               
-              <TableCell isHeader className="py-3 text-start">
+              <TableCell isHeader className="py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-400">
                 Estado
               </TableCell>
               
-              <TableCell isHeader className="py-3 text-start">
+              <TableCell isHeader className="py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-400">
                 Acciones
               </TableCell>
             </TableRow>
@@ -282,15 +296,101 @@ export default function EnviosTabla() {
                 
                 <TableCell className="py-3">
                   <div className="flex gap-2">
-                    <button className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-                      Ver Detalles
-                    </button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openDetallesModal(envio)}
+                    >
+                      <EyeIcon className="w-4 h-4" />
+                    </Button>
+
                   </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+        
+        {/* Modal para ver detalles del Envío */}
+        <Modal
+          isOpen={showDetallesModal}
+          onClose={closeDetallesModal}
+          className="max-w-[650px] m-4"
+        >
+          {selectedEnvio && (
+            <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-xl">
+              {/* Header */}
+              <div className="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">
+                  📦
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                    Detalles del Envío
+                  </h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Código: <span className="font-medium">{selectedEnvio.codigo}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Detalles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm text-gray-700 dark:text-gray-300">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Tipo</p>
+                  <p className="font-medium capitalize">{selectedEnvio.tipo}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Estado</p>
+                  <p className="font-medium">
+                    {selectedEnvio.estado === "en_puerto_salida"
+                      ? "En puerto de salida"
+                      : selectedEnvio.estado === "en_transito"
+                        ? "En tránsito"
+                        : "En destino"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Almacén Origen</p>
+                  <p className="font-medium">{selectedEnvio.almacenOrigen}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Almacén Destino</p>
+                  <p className="font-medium">{selectedEnvio.almacenDestino}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Fecha de Salida</p>
+                  <p className="font-medium">{selectedEnvio.fechaSalida}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Fecha de Llegada</p>
+                  <p className="font-medium">
+                    {selectedEnvio.fechaLlegada ?? "Pendiente"}
+                  </p>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <p className="text-gray-500 dark:text-gray-400">Cantidad de Paquetes</p>
+                  <p className="font-medium">{selectedEnvio.paquetesCount}</p>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="mt-6 flex justify-end">
+                <Button size="sm" variant="outline" onClick={closeDetallesModal}>
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+
       </div>
     </div>
   );
