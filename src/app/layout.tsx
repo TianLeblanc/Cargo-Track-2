@@ -11,7 +11,7 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: 'Cargo Track',
-  description: 'Envios internacionales h',
+  description: 'Envios internacionales hasta la puerta de tu casa',
 };
 
 export default function RootLayout({

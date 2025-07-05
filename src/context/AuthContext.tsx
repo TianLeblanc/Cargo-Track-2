@@ -36,7 +36,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const mockUsers: User[] = [
   {id: "31216675", name: "Saul Goodman", email: "saul@gmail.com", role: 'admin', password:"12345678"},
-  {id: "31667720", name: "Sebas Leblanc", email: "sebacho@gmail.co", role: 'admin', password:"12345678"},
+  {id: "31667720", name: "Sebas Leblanc", email: "sebacho@gmail.com", role: 'admin', password:"12345678"},
   {id: "30414491", name: "Diego Cacorrazo", email: "diego@cacorro.com", role: 'empleado', password:"12345678"},
 ];
 
