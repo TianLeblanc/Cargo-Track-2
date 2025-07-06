@@ -3,6 +3,7 @@ import { Outfit } from 'next/font/google';
 import { AuthProvider } from '@/context/AuthContext';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+
 import type { Metadata } from 'next';
 
 const outfit = Outfit({

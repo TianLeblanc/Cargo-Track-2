@@ -38,6 +38,8 @@ const mockUsers: User[] = [
   {id: "31216675", name: "Saul Goodman", email: "saul@gmail.com", role: 'admin', password:"12345678"},
   {id: "31667720", name: "Sebas Leblanc", email: "sebacho@gmail.com", role: 'admin', password:"12345678"},
   {id: "30414491", name: "Diego Cacorrazo", email: "diego@cacorro.com", role: 'empleado', password:"12345678"},
+  {id: "31667982", name: "sandra mujica", email: "sandra@gmail.com", role: 'cliente', password:"12345678"},
+  {id: "31667983", name: "Pepito mamaculo", email: "pepito@gmail.com", role: 'cliente', password: "12345678"},
 ];
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {

@@ -1,3 +1,4 @@
+'use client';
 import {
   Table,
   TableBody,
@@ -6,160 +7,192 @@ import {
   TableRow,
 } from "../ui/table";
 import Badge from "../ui/badge/Badge";
-//import Image from "next/image";
+import { Modal } from "../ui/modal";
+import Button from "@/components/ui/button/Button";
+import { PackageSearchIcon, FilterIcon, EyeIcon } from "lucide-react";
+import { useState } from "react";
 
-// Define the TypeScript interface for the table rows
-interface Product {
-  id: number; // Unique identifier for each product
-  name: string; // Product name
-  //variants: string; // Number of variants (e.g., "1 Variant", "2 Variants")
-  category: string; // Category of the product
-  // status: string; // Status of the product
-  
-  status: "Pendiente" | "Entregado" | "Cancelado"; // Status of the product
+interface Paquete {
+  id: string;
+  alto: number;
+  ancho: number;
+  desc: string;
+  status: "Pendiente" | "Entregado" | "Cancelado";
+  id_envio: string;
+  id_almacen: string;
+  id_empleado: number;
 }
 
-// Define the table data using the interface
-const tableData: Product[] = [
+const tableData: Paquete[] = [
   {
-    id: 1,
-    name: "RR123456789UY",
-    //variants: "1 Variant",
-    category: "cafecito con pan",
-    status: "Pendiente"
+    id: "PKG-2025-001",
+    alto: 10,
+    ancho: 20,
+    desc: "Cafecito con pan",
+    status: "Pendiente",
+    id_envio: "CT-2023-001",
+    id_almacen: "ALM-001",
+    id_empleado: 31216675,
   },
   {
-    id: 2,
-    name: "RR123454489UY",
-    //variants: "1 Variant",
-    category: "quesitos sin almendras",
-    status: "Entregado"
-  }
+    id: "PKG-2025-002",
+    alto: 10,
+    ancho: 20,
+    desc: "Quesitos sin almendras",
+    status: "Entregado",
+    id_envio: "CT-2023-002",
+    id_almacen: "ALM-002",
+    id_empleado: 31216675,
+  },
 ];
- 
 
 export default function PaqueteCliente() {
+  const [selected, setSelected] = useState<Paquete | null>(null);
+
+  const openModal = (paquete: Paquete) => setSelected(paquete);
+  const closeModal = () => setSelected(null);
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
-      <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-           Casillero
-          </h3>
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-6 pb-6 pt-5 dark:border-gray-800 dark:bg-white/[0.03]">
+      {/* Header */}
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">
+            <PackageSearchIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-white/90">
+              Casillero
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Listado de paquetes asignados
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
-            <svg
-              className="stroke-current fill-white dark:fill-gray-800"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M2.29004 5.90393H17.7067"
-                stroke=""
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M17.7075 14.0961H2.29085"
-                stroke=""
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12.0826 3.33331C13.5024 3.33331 14.6534 4.48431 14.6534 5.90414C14.6534 7.32398 13.5024 8.47498 12.0826 8.47498C10.6627 8.47498 9.51172 7.32398 9.51172 5.90415C9.51172 4.48432 10.6627 3.33331 12.0826 3.33331Z"
-                fill=""
-                stroke=""
-                strokeWidth="1.5"
-              />
-              <path
-                d="M7.91745 11.525C6.49762 11.525 5.34662 12.676 5.34662 14.0959C5.34661 15.5157 6.49762 16.6667 7.91745 16.6667C9.33728 16.6667 10.4883 15.5157 10.4883 14.0959C10.4883 12.676 9.33728 11.525 7.91745 11.525Z"
-                fill=""
-                stroke=""
-                strokeWidth="1.5"
-              />
-            </svg>
+        {/* Acciones */}
+        <div className="flex gap-2">
+          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.05]">
+            <FilterIcon className="h-4 w-4" />
             Filtrar
           </button>
-          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
+          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.05]">
             Ver todo
           </button>
         </div>
       </div>
+
+      {/* Tabla */}
       <div className="max-w-full overflow-x-auto">
         <Table>
-          {/* Table Header */}
-          <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
-            <TableRow>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-900 text-start text-theme-xs dark:text-gray-200"
-              >
+          <TableHeader className="border-y border-gray-100 dark:border-gray-800">
+            <TableRow> 
+              <TableCell isHeader className="py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-400">
                 # De Guía
               </TableCell>
-
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-900 text-start text-theme-xs dark:text-gray-200"
-              >
+              <TableCell isHeader className="py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-400">
                 Descripción
               </TableCell>
-
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-900 text-start text-theme-xs dark:text-gray-200"
-              >
-                Estado del envío
+              <TableCell isHeader className="py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-400">
+                Estado del Envío
+              </TableCell>
+              <TableCell isHeader className="py-3 text-left text-sm font-semibold text-gray-800 dark:text-gray-400">
+                Acciones
               </TableCell>
             </TableRow>
           </TableHeader>
 
-          {/* Table Body */}
 
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {tableData.map((product) => (
-              <TableRow key={product.id} className="">
-                <TableCell className="py-3">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                        {product.name}
-                      </p>
-                      <span className="text-gray-700 text-theme-xs dark:text-gray-400">
-                        pepentin
-                      </span>
-                    </div>
-                  </div>
+            {tableData.map((paquete) => (
+              <TableRow key={paquete.id}>
+                <TableCell className="py-4">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {paquete.id}
+                  </p>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    pepentin
+                  </span>
                 </TableCell>
-                
-                <TableCell className="py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                  {product.category}
+
+                <TableCell className="py-4 text-sm text-gray-700 dark:text-gray-300">
+                  {paquete.desc}
                 </TableCell>
-                <TableCell className="py-3 text-gray-600 text-theme-sm dark:text-gray-400">
+
+                <TableCell className="py-4">
                   <Badge
                     size="sm"
                     color={
-                      product.status === "Entregado"
+                      paquete.status === "Entregado"
                         ? "success"
-                        : product.status === "Pendiente"
+                        : paquete.status === "Pendiente"
                         ? "warning"
                         : "error"
                     }
                   >
-                    {product.status}
+                    {paquete.status}
                   </Badge>
+                </TableCell>
+
+                <TableCell className="py-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openModal(paquete)}
+                    className="inline-flex items-center gap-1 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-3 py-1 text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-800 transition"
+                  >
+                    <EyeIcon className="w-4 h-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      {/* Modal de detalles */}
+      <Modal isOpen={!!selected} onClose={closeModal} className="max-w-md m-4">
+        {selected && (
+          <div className="p-6 bg-white dark:bg-gray-900 rounded-xl shadow-lg">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white/90 flex items-center gap-2">
+              <PackageSearchIcon className="w-5 h-5" />
+              Detalles del Paquete
+            </h2>
+            <div className="grid grid-cols-1 gap-4 text-sm text-gray-700 dark:text-gray-300">
+              <p><strong>ID:</strong> {selected.id}</p>
+              <p><strong>Descripción:</strong> {selected.desc}</p>
+              <p><strong>Dimensiones:</strong> {selected.alto}cm x {selected.ancho}cm</p>
+              <p><strong>ID Envío:</strong> {selected.id_envio}</p>
+              <p><strong>Almacén:</strong> {selected.id_almacen}</p>
+              <p><strong>Empleado:</strong> {selected.id_empleado}</p>
+              <p>
+                <strong>Estado:</strong>{" "}
+                <Badge
+                  size="sm"
+                  color={
+                    selected.status === "Entregado"
+                      ? "success"
+                      : selected.status === "Pendiente"
+                      ? "warning"
+                      : "error"
+                  }
+                >
+                  {selected.status}
+                </Badge>
+              </p>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={closeModal}
+                className="rounded-md bg-gray-100 dark:bg-gray-800 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
