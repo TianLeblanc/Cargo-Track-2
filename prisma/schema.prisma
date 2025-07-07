@@ -13,117 +13,107 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-model Empleado {
-  cedula      String   @id
-  nombre      String
-  apellido    String
-  email       String
-  telefono    String
-  contrasena  String
-  rol         Boolean
 
-  paquetes    Paquete[]
-  envios      Envio[]      @relation("EmpleadoEnvio")
-  facturas    Factura[]
-}
-
-model Cliente {
-  cedula      String   @id
-  nombre      String
-  apellido    String
-  email       String
-  telefono    String
-  contrasena  String
-
-  envios      Envio[]      @relation("ClienteEnvio")
+model Usuario {
+  id             Int      @id @default(autoincrement())
+  cedula         String   @unique
+  nombre         String
+  apellido       String
+  email          String  @unique
+  telefono       String
+  contrasena     String
+  rol            String
+  paquetes       Paquete[]
+  enviosEmpleado Envio[]    @relation("EmpleadoEnvio")
+  enviosCliente  Envio[]    @relation("ClienteEnvio")
+  facturas       Factura[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Almacen {
-  codigo         Int      @id @default(autoincrement())
-  telefono       String
-  linea1         String
-  linea2         String?
-  pais           String
-  estado         String
-  ciudad         String
-  codigoPostal   String
-
+  codigo        Int      @id @default(autoincrement())
+  telefono      String
+  linea1        String
+  linea2        String?
+  pais          String
+  estado        String
+  ciudad        String
+  codigoPostal  String
   paquetes      Paquete[]
-  origenEnvios  Envio[]   @relation("OrigenAlmacen")
-  destinoEnvios Envio[]   @relation("DestinoAlmacen")
+  enviosOrigen  Envio[]  @relation("OrigenAlmacen")
+  enviosDestino Envio[] @relation("DestinoAlmacen")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Paquete {
-  codigo         Int      @id @default(autoincrement())
-  descripcion    String
-  largo          Float
-  ancho          Float
-  alto           Float
-  peso           Float
-  volumen        Float
-  almacenCodigo  Int
-  empleadoCedula String
-
-  almacen        Almacen  @relation(fields: [almacenCodigo], references: [codigo])
-  empleado       Empleado @relation(fields: [empleadoCedula], references: [cedula])
-  incluye        Incluye[]
+  tracking      Int      @id @default(autoincrement())
+  descripcion   String
+  largo         Float
+  ancho         Float
+  alto          Float
+  peso          Float
+  volumen       Float
+  almacenCodigo Int
+  empleadoId    Int
+  envioNumero   Int?
+  
+  almacen       Almacen  @relation(fields: [almacenCodigo], references: [codigo])
+  empleado      Usuario  @relation(fields: [empleadoId], references: [id])
+  envio         Envio?   @relation(fields: [envioNumero], references: [numero])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Envio {
-  numero         Int      @id @default(autoincrement())
-  tipo           String
-  estado         String
-  tracking       String
-  fechaSalida    DateTime
-  fechaLlegada   DateTime?
-  origenCodigo   Int
-  destinoCodigo  Int
-  empleadoCedula String
-  clienteCedula  String
+  numero        Int       @id @default(autoincrement())
+  tipo          String
+  estado        String
+  fechaSalida   DateTime
+  fechaLlegada  DateTime?
+  origenCodigo  Int
+  destinoCodigo Int
+  empleadoId    Int
+  clienteId     Int
+  paquetes      Paquete[]
 
-  origen         Almacen  @relation("OrigenAlmacen", fields: [origenCodigo], references: [codigo])
-  destino        Almacen  @relation("DestinoAlmacen", fields: [destinoCodigo], references: [codigo])
-  empleado       Empleado @relation("EmpleadoEnvio", fields: [empleadoCedula], references: [cedula])
-  cliente        Cliente  @relation("ClienteEnvio", fields: [clienteCedula], references: [cedula])
-  incluye        Incluye[]
-  facturas       Factura[]
-}
-
-model Incluye {
-  envioNumero   Int
-  paqueteCodigo Int
-
-  envio         Envio   @relation(fields: [envioNumero], references: [numero])
-  paquete       Paquete @relation(fields: [paqueteCodigo], references: [codigo])
-
-  @@id([envioNumero, paqueteCodigo])
+  origen        Almacen   @relation("OrigenAlmacen", fields: [origenCodigo], references: [codigo])
+  destino       Almacen   @relation("DestinoAlmacen", fields: [destinoCodigo], references: [codigo])
+  empleado      Usuario   @relation("EmpleadoEnvio", fields: [empleadoId], references: [id])
+  cliente       Usuario   @relation("ClienteEnvio", fields: [clienteId], references: [id])
+  facturas      Factura[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Factura {
-  numero         Int      @id @default(autoincrement())
-  estado         String
-  metodoPago     String
-  monto          Float
-  cantidadPiezas Int
-  envioNumero    Int
-  empleadoCedula String
+  numero          Int             @id @default(autoincrement())
+  estado          Boolean
+  pdf             String?
+  metodoPago      String
+  monto           Float
+  cantidadPiezas  Int
+  envioNumero     Int
+  clienteId       Int
+  detalles        DetalleFactura[]
+  
 
-  envio          Envio    @relation(fields: [envioNumero], references: [numero])
-  empleado       Empleado @relation(fields: [empleadoCedula], references: [cedula])
-  detalles       DetalleFactura[]
+  envio            Envio          @relation(fields: [envioNumero], references: [numero])
+  clienteUsuario   Usuario        @relation(fields: [clienteId], references: [id])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 model DetalleFactura {
-  numero         Int    @id @default(autoincrement())
-  montoCalculado Float
-  facturaNumero  Int
+  facturaNumero   Int
+  numero          Int
+  // falta 'codigoPaquete' y 'cant'
+  montoCalculado  Float
+  descripcion     String?
 
-  factura        Factura @relation(fields: [facturaNumero], references: [numero])
-}
-
-
-enum Status {
-  active
-  inactive
-  archived
+  factura       Factura        @relation(fields: [facturaNumero], references: [numero])
+  
+  @@id([facturaNumero, numero])
+  @@index([facturaNumero])
 }
