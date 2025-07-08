@@ -11,7 +11,7 @@ import {useAuth } from "@/context/AuthContext";
 
 
 const AppHeader: React.FC = () => {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();

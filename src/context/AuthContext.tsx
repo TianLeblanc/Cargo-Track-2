@@ -8,6 +8,7 @@ interface User {
   id: string;
   email: string;
   name: string;
+  lastname: string
   role: UserRole;
   password?: string; // Solo para desarrollo, no debería estar en producción
 }
@@ -35,11 +36,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Usuarios de prueba para desarrollo
 
 const mockUsers: User[] = [
-  {id: "31216675", name: "Saul Goodman", email: "saul@gmail.com", role: 'admin', password:"12345678"},
-  {id: "31667720", name: "Sebas Leblanc", email: "sebacho@gmail.com", role: 'admin', password:"12345678"},
-  {id: "30414491", name: "Diego Cacorrazo", email: "diego@cacorro.com", role: 'empleado', password:"12345678"},
-  {id: "31667982", name: "sandra mujica", email: "sandra@gmail.com", role: 'cliente', password:"12345678"},
-  {id: "31667983", name: "Pepito mamaculo", email: "pepito@gmail.com", role: 'cliente', password: "12345678"},
+  {id: "31216675", name: "Saul", lastname: "Goodman", email: "saul@gmail.com", role: 'admin', password:"12345678"},
+  {id: "31667720", name: "Sebas", lastname: "Leblanc", email: "sebacho@gmail.com", role: 'admin', password:"12345678"},
+  {id: "30414491", name: "Diego", lastname: "Cacorrazo", email: "diego@cacorro.com", role: 'empleado', password:"12345678"},
+  {id: "31667982", name: "Sandra", lastname: "Mujica", email: "sandra@gmail.com", role: 'cliente', password:"12345678"},
+  {id: "31667983", name: "Pepito", lastname: "Mamaculo", email: "pepito@gmail.com", role: 'cliente', password: "12345678"},
 ];
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -110,6 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               id: Math.random().toString(36).substr(2, 9),
               email,
               name: mockUser.name,
+              lastname: mockUser.lastname,
               role: mockUser.role,
               password: mockUser.password // Solo para desarrollo, no debería estar en producción
             };
@@ -147,6 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             id: Math.random().toString(36).substr(2, 9),
             email: userData.email,
             name: userData.name,
+            lastname: userData.name,
             role: userData.role || 'cliente'
           };
 

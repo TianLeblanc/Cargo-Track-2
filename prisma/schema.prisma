@@ -12,43 +12,95 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+model Almacen {
+  id         Int     @id @default(autoincrement())
+  telefono   String
+  linea1     String
+  linea2     String?
+  pais       String
+  estado     String
+  ciudad     String
+  codpostal  String
+
+  // Relaciones
+  origenEnvios   Envio[] @relation("OrigenAlmacen")
+  destinoEnvios  Envio[] @relation("DestinoAlmacen")
+  paquetes       Paquete[]
 }
 
 model Usuario {
-  id             Int      @id @default(autoincrement())
-  cedula         String   @unique
-  nombre         String
-  apellido       String
-  email          String  @unique
-  telefono       String
-  contrasena     String
-  rol            String
-  paquetes       Paquete[]
-  enviosEmpleado Envio[]    @relation("EmpleadoEnvio")
-  enviosCliente  Envio[]    @relation("ClienteEnvio")
-  facturas       Factura[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id       Int     @id @default(autoincrement())
+  cedula   String  @unique
+  nombre   String
+  apellido String
+  email    String  @unique
+  telefono String
+  password String
+  rol      String
+
+  // Relaciones
+  enviosCliente Envio[] @relation("ClienteEnvio")
+  enviosEmpleado Envio[] @relation("EmpleadoEnvio")
+  facturas      Factura[]
+  paquetes      Paquete[]
 }
 
-model Almacen {
-  codigo        Int      @id @default(autoincrement())
-  telefono      String
-  linea1        String
-  linea2        String?
-  pais          String
+model Envio {
+  numero        Int     @id
+  tipo          String
   estado        String
-  ciudad        String
-  codigoPostal  String
+  fechasalida   DateTime
+  fechallegada  DateTime?
+
+  origenCodigo   Int
+  destinoCodigo  Int
+  EmpleadoId     Int 
+  clienteId      Int
   paquetes      Paquete[]
-  enviosOrigen  Envio[]  @relation("OrigenAlmacen")
-  enviosDestino Envio[] @relation("DestinoAlmacen")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  origen   Almacen @relation("OrigenAlmacen", fields: [origenCodigo], references: [id])
+  destino  Almacen @relation("DestinoAlmacen", fields: [destinoCodigo], references: [id])
+  empleado Usuario @relation("EmpleadoEnvio", fields: [EmpleadoId], references: [id])
+  cliente  Usuario @relation("ClienteEnvio", fields: [clienteId], references: [id])
+  factura  Factura? @relation("EnvioFactura")
+}
+
+model Factura {
+  numero         Int     @id @default(autoincrement())
+  estado         Boolean
+  pdf            String?
+  metodoPago     String
+  monto          Float
+  cantidadPiezas Int
+  envioNumero    Int @unique
+  clienteId      Int 
+  detalles  DetalleFactura[]
+
+  // Relaciones
+  envio     Envio     @relation("EnvioFactura", fields: [envioNumero], references: [numero])
+  cliente   Usuario   @relation(fields: [clienteId], references: [id])
+  
+}
+
+model DetalleFactura {
+  idFactura Int
+  numero    Int     @default(autoincrement())
+  monto     Float
+  idPaquete Int
+
+  paquete Paquete @relation(fields: [idPaquete], references: [id])
+  factura Factura @relation(fields: [idFactura], references: [numero])
+
+  @@id([idFactura, numero])
 }
 
 model Paquete {
-  tracking      Int      @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   descripcion   String
   largo         Float
   ancho         Float
@@ -58,62 +110,10 @@ model Paquete {
   almacenCodigo Int
   empleadoId    Int
   envioNumero   Int?
-  
-  almacen       Almacen  @relation(fields: [almacenCodigo], references: [codigo])
-  empleado      Usuario  @relation(fields: [empleadoId], references: [id])
+
+  // Relaciones
+  almacen  Almacen  @relation(fields: [almacenCodigo], references: [id])
+  empleado Usuario  @relation(fields: [empleadoId], references: [id])
   envio         Envio?   @relation(fields: [envioNumero], references: [numero])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-model Envio {
-  numero        Int       @id @default(autoincrement())
-  tipo          String
-  estado        String
-  fechaSalida   DateTime
-  fechaLlegada  DateTime?
-  origenCodigo  Int
-  destinoCodigo Int
-  empleadoId    Int
-  clienteId     Int
-  paquetes      Paquete[]
-
-  origen        Almacen   @relation("OrigenAlmacen", fields: [origenCodigo], references: [codigo])
-  destino       Almacen   @relation("DestinoAlmacen", fields: [destinoCodigo], references: [codigo])
-  empleado      Usuario   @relation("EmpleadoEnvio", fields: [empleadoId], references: [id])
-  cliente       Usuario   @relation("ClienteEnvio", fields: [clienteId], references: [id])
-  facturas      Factura[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-
-model Factura {
-  numero          Int             @id @default(autoincrement())
-  estado          Boolean
-  pdf             String?
-  metodoPago      String
-  monto           Float
-  cantidadPiezas  Int
-  envioNumero     Int
-  clienteId       Int
-  detalles        DetalleFactura[]
-  
-
-  envio            Envio          @relation(fields: [envioNumero], references: [numero])
-  clienteUsuario   Usuario        @relation(fields: [clienteId], references: [id])
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-}
-
-model DetalleFactura {
-  facturaNumero   Int
-  numero          Int
-  // falta 'codigoPaquete' y 'cant'
-  montoCalculado  Float
-  descripcion     String?
-
-  factura       Factura        @relation(fields: [facturaNumero], references: [numero])
-  
-  @@id([facturaNumero, numero])
-  @@index([facturaNumero])
+  detalles DetalleFactura[]
 }

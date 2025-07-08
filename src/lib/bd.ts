@@ -1,75 +1,123 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client/edge'
+import { withAccelerate } from '@prisma/extension-accelerate'
 
-// Singleton para el cliente Prisma
-const prismaClientSingleton = () => {
-  return new PrismaClient();
-};
+export const prisma = new PrismaClient().$extends(withAccelerate())
+
+
+//Singleton para el cliente Prisma
+//const prismaClientSingleton = () => {
+// return new PrismaClient();
+// };
+
+// declare global {
+//   var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
+// }
+
+// export const prisma = globalThis.prisma ?? prismaClientSingleton();/
+
 
 declare global {
-  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
+  var prisma: undefined | ReturnType<typeof PrismaClient>;
 }
-
-export const prisma = globalThis.prisma ?? prismaClientSingleton();
 
 if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;
 
-// Esquemas y tipos (opcional, puedes moverlos a otro archivo)
-export type Product = {
-  id: number;
-  imageUrl: string;  // Usa el nombre camelCase
-  name: string;
-  status: string;
-  price: number;
-  stock: number;
-  availableAt: Date;
+// Funciones para Almacén
+export const AlmacenService = {
+  async getAll() {
+    return await prisma.almacen.findMany({
+      orderBy: { codigo: 'asc' },
+    });
+  },
+
+  async getById(codigo: number) {
+    return await prisma.almacen.findUnique({
+      where: { codigo },
+    });
+  },
+
+  async create(data: {
+    telefono: string;
+    linea1: string;
+    linea2?: string;
+    pais: string;
+    estado: string;
+    ciudad: string;
+    codigoPostal: string;
+  }) {
+    return await prisma.almacen.create({
+      data,
+    });
+  },
+
+  async update(
+    codigo: number,
+    data: {
+      telefono?: string;
+      linea1?: string;
+      linea2?: string;
+      pais?: string;
+      estado?: string;
+      ciudad?: string;
+      codigoPostal?: string;
+    }
+  ) {
+    return await prisma.almacen.update({
+      where: { codigo },
+      data,
+    });
+  },
+
+  async delete(codigo: number) {
+    return await prisma.almacen.delete({
+      where: { codigo },
+    });
+  },
 };
 
-// Funciones adaptadas para Prisma
-export async function getProducts(
-  search: string,
-  offset: number
-): Promise<{
-  products: Product[];
-  newOffset: number | null;
-  totalProducts: number;
-}> {
-  if (search) {
-    const products = await prisma.product.findMany({
-      where: {
-        name: { contains: search, mode: 'insensitive' }
-      },
-      select: {
-        id: true,
-        name: true,
-        imageUrl: true,  // Usa el nombre del modelo (no el de la BD)
-        status: true,
-        price: true,
-        stock: true,
-        availableAt: true
-      },
-      take: 1000
+// Funciones para Usuario
+export const UsuarioService = {
+  async getAll() {
+    return await prisma.usuario.findMany({
+      orderBy: { id: 'asc' },
     });
-    return { products, newOffset: null, totalProducts: 0 };
-  }
+  },
 
-  if (offset === null) {
-    return { products: [], newOffset: null, totalProducts: 0 };
-  }
+  async getById(id: number) {
+    return await prisma.usuario.findUnique({
+      where: { id },
+    });
+  },
 
-  const [products, total] = await Promise.all([
-    prisma.product.findMany({ skip: offset, take: 5 }), 
-    prisma.product.count() 
-  ]);
+  async create(data: {
+    cedula: string;
+    nombre: string;
+    apellido: string;
+    email: string;
+    telefono: string;
+    contrasena: string;
+    rol: string;
+  }) {
+    return await prisma.usuario.create({
+      data,
+    });
+  },
+  // ... otras funciones para Usuario
+};
 
-  const newOffset = products.length >= 5 ? offset + 5 : null;
+// Funciones para Paquete
+export const PaqueteService = {
+  async getAll() {
+    return await prisma.paquete.findMany({
+      orderBy: { tracking: 'asc' },
+      include: {
+        almacen: true,
+        empleado: true,
+        envio: true,
+      },
+    });
+  },
+  // ... otras funciones para Paquete
+};
 
-  return {
-    products,
-    newOffset,
-    totalProducts: total
-  };
-}
-
-export async function deleteProductById(id: number) {
-  await prisma.product.delete({ where: { id } });
-}
+// ... Repite el patrón para Envio, Factura, DetalleFactura
