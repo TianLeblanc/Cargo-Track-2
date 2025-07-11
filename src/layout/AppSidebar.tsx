@@ -382,7 +382,7 @@ const AppSidebar: React.FC = () => {
               >
                 {isExpanded || isHovered || isMobileOpen ? (
                   <div className="text-gray-800 dark:text-gray-200">
-                    <span> ¡Bienvenido, {user?.name}!</span>
+                       <span>¡Bienvenido, {user?.nombre} {user?.apellido}!</span>
                   </div>
                 ) : (
                   <HorizontaLDots />

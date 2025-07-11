@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
+import { EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
@@ -14,8 +14,11 @@ export default function SignUpForm() {
     flastname: "",
     slastname: "",
     email: "",
-    password: ""
+    password: "",
+    cedula: "",
+    telefono: "",
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -31,13 +34,19 @@ export default function SignUpForm() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    
+
+    const nombre = `${formData.fname} ${formData.sname}`.trim();
+    const apellido = `${formData.flastname} ${formData.slastname}`.trim();
+
     try {
       await register({
         email: formData.email,
         password: formData.password,
-        name: `${formData.fname} ${formData.flastname}`.trim(), // Nombre completo
-        role: 'cliente' // Rol por defecto
+        cedula: formData.cedula,
+        nombre,
+        apellido,
+        telefono: formData.telefono,
+        rol: "cliente", // Rol por defecto
       });
     } catch (err) {
       setError("Error en el registro. Por favor intente nuevamente.");
@@ -55,7 +64,7 @@ export default function SignUpForm() {
               Registrarse
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Ingrese sus datos, email y contraseña para crear una cuenta.
+              Ingrese sus datos para crear una cuenta.
             </p>
           </div>
 
@@ -68,102 +77,98 @@ export default function SignUpForm() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-5">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <div className="sm:col-span-1">
-                  <Label>
-                    Primer nombre<span className="text-error-500">*</span>
-                  </Label>
+                <div>
+                  <Label>Primer Nombre *</Label>
                   <Input
-                    type="text"
                     name="fname"
-                    placeholder="Ingrese su primer nombre"
                     value={formData.fname}
                     onChange={handleChange}
-                   
+                    placeholder="Ej: María"
                   />
                 </div>
-
-                <div className="sm:col-span-1">
-                  <Label>
-                    Segundo nombre
-                  </Label>
+                <div>
+                  <Label>Segundo Nombre</Label>
                   <Input
-                    type="text"
                     name="sname"
-                    placeholder="Ingrese su segundo nombre"
                     value={formData.sname}
                     onChange={handleChange}
+                    placeholder="Ej: Alejandra"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <div className="sm:col-span-1">
-                  <Label>
-                    Primer apellido<span className="text-error-500">*</span>
-                  </Label>
+                <div>
+                  <Label>Primer Apellido *</Label>
                   <Input
-                    type="text"
                     name="flastname"
-                    placeholder="Ingrese su primer apellido"
                     value={formData.flastname}
                     onChange={handleChange}
-                   
+                    placeholder="Ej: Rodríguez"
                   />
                 </div>
-
-                <div className="sm:col-span-1">
-                  <Label>
-                    Segundo apellido
-                  </Label>
+                <div>
+                  <Label>Segundo Apellido</Label>
                   <Input
-                    type="text"
                     name="slastname"
-                    placeholder="Ingrese su segundo apellido"
                     value={formData.slastname}
                     onChange={handleChange}
+                    placeholder="Ej: Pérez"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <div className="sm:col-span-1">
-                  <Label>
-                    Email<span className="text-error-500">*</span>
-                  </Label>
-                  <Input
-                    type="email"
-                    name="email"
-                    placeholder="Ingrese su email"
-                    value={formData.email}
-                    onChange={handleChange}
-                   
-                  />
-                </div>
+              <div>
+                <Label>Cédula *</Label>
+                <Input
+                  name="cedula"
+                  value={formData.cedula}
+                  onChange={handleChange}
+                  placeholder="Ej: 12345678"
+                />
+              </div>
 
-                <div className="sm:col-span-1">
-                  <Label>
-                    Contraseña<span className="text-error-500">*</span>
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      placeholder="Ingrese su contraseña"
-                      value={formData.password}
-                      onChange={handleChange}
-                      
-                    />
-                    <span
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
-                    >
-                      {showPassword ? (
-                        <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
-                      ) : (
-                        <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400" />
-                      )}
-                    </span>
-                  </div>
+              <div>
+                <Label>Teléfono *</Label>
+                <Input
+                  name="telefono"
+                  value={formData.telefono}
+                  onChange={handleChange}
+                  placeholder="Ej: 04141234567"
+                />
+              </div>
+
+              <div>
+                <Label>Email *</Label>
+                <Input
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="usuario@correo.com"
+                />
+              </div>
+
+              <div>
+                <Label>Contraseña *</Label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                  />
+                  <span
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer"
+                  >
+                    {showPassword ? (
+                      <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
+                    ) : (
+                      <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400" />
+                    )}
+                  </span>
                 </div>
               </div>
 
@@ -180,8 +185,8 @@ export default function SignUpForm() {
           </form>
 
           <div className="mt-5">
-            <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-              ¿Ya tiene una cuenta? {""}
+            <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400">
+              ¿Ya tienes una cuenta?{" "}
               <Link
                 href="/signin"
                 className="text-brand-500 hover:text-brand-600 dark:text-brand-400"

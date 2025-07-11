@@ -131,20 +131,16 @@ export default function SignInForm() {
               </div>
               
               <div>
-                <button 
-                  type="submit" 
-                  style={{ display: 'none' }} 
-                  aria-hidden="true" 
-                />
-                <Button
-                  className="w-full"
-                  size="sm"
-                  disabled={isLoading}
-                  onClick={() => document.getElementById('hidden-submit')?.click()}
-                >
-                  {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
-                </Button>
+              <Button
+               className="w-full"
+               size="sm"
+               type="submit"
+               disabled={isLoading}
+              >
+              {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+              </Button>
               </div>
+
             </div>
           </form>
 
