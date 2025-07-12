@@ -6,87 +6,90 @@
 
 generator client {
   provider = "prisma-client-js"
-  
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
+
 model Almacen {
-  id         Int     @id @default(autoincrement())
-  telefono   String
-  linea1     String
-  linea2     String?
-  pais       String
-  estado     String
-  ciudad     String
-  codpostal  String
+  id        Int     @id @default(autoincrement())
+  telefono  String
+  linea1    String
+  linea2    String?
+  pais      String
+  estado    String
+  ciudad    String
+  codpostal String
 
   // Relaciones
-  origenEnvios   Envio[] @relation("OrigenAlmacen")
-  destinoEnvios  Envio[] @relation("DestinoAlmacen")
-  paquetes       Paquete[]
+  origenEnvios  Envio[]   @relation("OrigenAlmacen")
+  destinoEnvios Envio[]   @relation("DestinoAlmacen")
+  paquetes      Paquete[]
 }
 
 model Usuario {
-  id       Int     @id @default(autoincrement())
-  cedula   String  @unique
-  nombre   String
-  apellido String
-  email    String  @unique
-  telefono String
-  password String
-  rol      String
+  id         Int    @id @default(autoincrement())
+  cedula     String @unique
+  email      String @unique
+  p_nombre   String
+  s_nombre   String?
+  p_apellido String
+  s_apellido String?
+  telefono   String
+  password   String
+  rol        String
 
   // Relaciones
-  enviosCliente Envio[] @relation("ClienteEnvio")
-  enviosEmpleado Envio[] @relation("EmpleadoEnvio")
-  facturas      Factura[]
-  paquetes      Paquete[]
+  enviosCliente  Envio[]   @relation("ClienteEnvio")
+  enviosEmpleado Envio[]   @relation("EmpleadoEnvio")
+  facturas       Factura[]
+  paquetes       Paquete[]
 }
 
 model Envio {
-  numero        Int     @id
-  tipo          String
-  estado        String
-  fechasalida   DateTime
-  fechallegada  DateTime?
+  numero       Int       @id
+  tipo         String
+  estado       String
+  fechasalida  DateTime
+  fechallegada DateTime?
 
-  origenCodigo   Int
-  destinoCodigo  Int
-  EmpleadoId     Int 
-  clienteId      Int
+  origenCodigo  Int
+  destinoCodigo Int
+  EmpleadoId    Int
+  clienteId     Int
   paquetes      Paquete[]
 
   // Relaciones
-  origen   Almacen @relation("OrigenAlmacen", fields: [origenCodigo], references: [id])
-  destino  Almacen @relation("DestinoAlmacen", fields: [destinoCodigo], references: [id])
-  empleado Usuario @relation("EmpleadoEnvio", fields: [EmpleadoId], references: [id])
-  cliente  Usuario @relation("ClienteEnvio", fields: [clienteId], references: [id])
+  origen   Almacen  @relation("OrigenAlmacen", fields: [origenCodigo], references: [id])
+  destino  Almacen  @relation("DestinoAlmacen", fields: [destinoCodigo], references: [id])
+  empleado Usuario  @relation("EmpleadoEnvio", fields: [EmpleadoId], references: [id])
+  cliente  Usuario  @relation("ClienteEnvio", fields: [clienteId], references: [id])
   factura  Factura? @relation("EnvioFactura")
 }
 
 model Factura {
-  numero         Int     @id @default(autoincrement())
+  numero         Int              @id @default(autoincrement())
   estado         Boolean
   pdf            String?
   metodoPago     String
   monto          Float
   cantidadPiezas Int
-  envioNumero    Int @unique
-  clienteId      Int 
-  detalles  DetalleFactura[]
+  envioNumero    Int              @unique
+  clienteId      Int
+  detalles       DetalleFactura[]
 
   // Relaciones
-  envio     Envio     @relation("EnvioFactura", fields: [envioNumero], references: [numero])
-  cliente   Usuario   @relation(fields: [clienteId], references: [id])
-  
+  envio   Envio   @relation("EnvioFactura", fields: [envioNumero], references: [numero])
+  cliente Usuario @relation(fields: [clienteId], references: [id])
 }
 
 model DetalleFactura {
   idFactura Int
-  numero    Int     @default(autoincrement())
+  numero    Int   @default(autoincrement())
   monto     Float
   idPaquete Int
 
@@ -97,7 +100,7 @@ model DetalleFactura {
 }
 
 model Paquete {
-  id            Int     @id @default(autoincrement())
+  id            Int    @id @default(autoincrement())
   descripcion   String
   largo         Float
   ancho         Float
@@ -109,8 +112,8 @@ model Paquete {
   envioNumero   Int?
 
   // Relaciones
-  almacen  Almacen  @relation(fields: [almacenCodigo], references: [id])
-  empleado Usuario  @relation(fields: [empleadoId], references: [id])
-  envio         Envio?   @relation(fields: [envioNumero], references: [numero])
+  almacen  Almacen          @relation(fields: [almacenCodigo], references: [id])
+  empleado Usuario          @relation(fields: [empleadoId], references: [id])
+  envio    Envio?           @relation(fields: [envioNumero], references: [numero])
   detalles DetalleFactura[]
 }
