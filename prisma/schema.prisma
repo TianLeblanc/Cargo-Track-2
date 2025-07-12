@@ -47,7 +47,7 @@ model Usuario {
 }
 
 model Envio {
-  numero        Int     @id
+  numero        Int     @id @default(autoincrement())
   tipo          String
   estado        String
   fechasalida   DateTime

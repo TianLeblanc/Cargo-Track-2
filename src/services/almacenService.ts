@@ -1,6 +1,6 @@
 // src/services/almacenService.ts
 
-import { Prisma } from '@/generated/prisma';
+import { Prisma } from '@prisma/client';
 
 export type AlmacenCreateInput = Prisma.AlmacenCreateInput;
 
