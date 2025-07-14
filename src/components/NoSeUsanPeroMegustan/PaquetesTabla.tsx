@@ -42,7 +42,7 @@ export default function PaqueteCliente() {
       
       try {
         setLoading(true);
-        const response = await fetch(`/api/paquetes?empleadoId=${user.id}`);
+        const response = await fetch(`/api/paquete?empleadoId=${user.id}`);
         if (!response.ok) throw new Error('Error al obtener paquetes');
         const data = await response.json();
         setPaquetes(data);

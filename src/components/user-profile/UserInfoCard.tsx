@@ -29,7 +29,7 @@ export default function UserInfoCard() {
                 Primer Nombre
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.name}
+                {user?.nombre}
               </p>
             </div>
 
@@ -38,7 +38,7 @@ export default function UserInfoCard() {
                 Apellido
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.lastname}
+                {user?.apellido}
               </p>
             </div>
 
@@ -56,7 +56,7 @@ export default function UserInfoCard() {
                 Telefono
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                04cataco2corocoroy1tajali
+                {user?.telefono || "No disponible"}
               </p>
             </div>
           </div>
@@ -100,13 +100,13 @@ export default function UserInfoCard() {
               <div className="mt-7">
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                   <div className="col-span-2 lg:col-span-1">
-                    <Label>First Name</Label>
-                    <Input type="text" defaultValue={user?.name} />
+                    <Label>Nombres</Label>
+                    <Input type="text" defaultValue={user?.nombre} />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
-                    <Label>Last Name</Label>
-                    <Input type="text" defaultValue={user?.lastname} />
+                    <Label>Apellidos</Label>
+                    <Input type="text" defaultValue={user?.apellido} />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
@@ -115,8 +115,8 @@ export default function UserInfoCard() {
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
-                    <Label>Phone</Label>
-                    <Input type="text" defaultValue="+09 363 398 46" />
+                    <Label>Telefono</Label>
+                    <Input type="text" defaultValue={user?.telefono} />
                   </div>
                 </div>
               </div>

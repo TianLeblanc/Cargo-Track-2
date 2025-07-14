@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import React from "react";
-import PaqueteCliente from "@/components/cliente/PaquetesTabla";
+import CasilleroCliente from "@/components/cliente/Casillero";
+
+
 
 export const metadata: Metadata = {
   title: "Cargo Track",
@@ -9,12 +11,14 @@ export const metadata: Metadata = {
 
 export default function Paquetes() {
   return (
+
     <div className="grid grid-rows-12 gap-4 md:gap-6">
       
       <div className="col-span-12 xl:col-span-7">
-        <PaqueteCliente />
+        <CasilleroCliente />
       </div>
 
     </div>
+
   );
 }
