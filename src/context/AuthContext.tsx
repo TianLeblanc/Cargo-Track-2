@@ -137,7 +137,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           rol,
         }),
       });
-
+      
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error en registro');
 
