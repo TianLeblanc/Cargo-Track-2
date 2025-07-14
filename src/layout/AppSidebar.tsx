@@ -29,13 +29,24 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
+    icon: <TableIcon />,
+    name: "Paquete",
+    path: "Paquete",
+  },
+  {
     icon: <MailIcon />,
-    name: "Casillero",
-    subItems: [
-      { name: "Paquetes", path: "/Paquetes" },
-      { name: "Facturas", path: "/Facturas" },
-      { name: "Envios", path: "/Envios" },
-    ],
+    name: "Tracking",
+    path: "/Tracking",
+  },
+  {
+    icon: <MailIcon />,
+    name: "Envios",
+    path: "/Envios",
+  },
+  {
+    icon: <MailIcon />,
+    name: "Facturas",
+    path: "/Facturas",
   },
   {
     icon: <CalenderIcon />,
@@ -114,11 +125,10 @@ const AppSidebar: React.FC = () => {
   
   const filteredNavItems = navItems
     .map((item) => {
-      if (item.name === "Casillero") {
+      if (item.name === "Pages") {
         const filteredSubItems = item.subItems?.filter((sub) => {
-          if (sub.name === "Paquetes") return isEmpleado ||isCliente ||isAdmin ;
-          if (sub.name === "Facturas") return isEmpleado || isCliente||isAdmin;
-          if (sub.name === "Envios") return isEmpleado ||isCliente ||isAdmin;
+          if (sub.name === "Blank Page") return isAdmin ;
+          if (sub.name === "404 Error") return isAdmin;
           return true;
         });
         return { ...item, subItems: filteredSubItems };
@@ -128,8 +138,12 @@ const AppSidebar: React.FC = () => {
     })
     .filter((item) => {
       if (item.subItems && item.subItems.length === 0) return false;
+      if (item.name === "Paquetes") return isCliente;
+      if (item.name === "Facturas") return isCliente;
+      if (item.name === "Envios") return isCliente;
       if (item.name === "Lista de Usuarios") return isAdmin||isEmpleado;
       if (item.name === "Almacen") return isAdmin || isEmpleado;
+
       return true;
     });
 
@@ -400,9 +414,9 @@ const AppSidebar: React.FC = () => {
                     : "justify-start"
                 }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? "Others" : <HorizontaLDots />}
+                {/* {isExpanded || isHovered || isMobileOpen ? "Others" : <HorizontaLDots />} */}
               </h2>
-              {renderMenuItems(othersItems, "others")}
+              {/* {renderMenuItems(othersItems, "others")} */}
             </div>
           </div>
         </nav>

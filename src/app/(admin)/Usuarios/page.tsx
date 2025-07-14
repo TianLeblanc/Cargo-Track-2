@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import React from "react";
-import UsersTabla from "@/components/admin/UsersTabla";
 import UsersTablaPrueba from "@/components/admin/UsersTabla Prueba";
 import { ProtectedRoute } from "@/components/ProteccionRutas/ProteccionRuta";
 

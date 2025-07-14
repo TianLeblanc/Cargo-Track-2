@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import React from "react";
-import AlmacenTabla from "@/components/almacen/AlmacenTabla";
+import AlmacenTabla from "@/components/admin/AlmacenTabla";
 import { ProtectedRoute } from "@/components/ProteccionRutas/ProteccionRuta";
 
 export const metadata: Metadata = {

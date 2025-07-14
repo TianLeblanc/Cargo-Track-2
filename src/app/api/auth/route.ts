@@ -1,7 +1,6 @@
 // src/app/api/auth/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/bd';
-import bcrypt from 'bcryptjs';
 
 export async function POST(req: NextRequest) {
   const { type, email, password, cedula, nombre, apellido, telefono, rol } = await req.json();
@@ -13,7 +12,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Correo ya registrado' }, { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
     const nuevoUsuario = await prisma.usuario.create({
       data: {
         email,
@@ -22,7 +20,7 @@ export async function POST(req: NextRequest) {
         apellido,
         telefono,
         rol: rol || 'cliente',
-        password: hashedPassword,
+        password, 
       }
     });
 
@@ -31,11 +29,12 @@ export async function POST(req: NextRequest) {
 
   if (type === 'login') {
     const user = await prisma.usuario.findUnique({ where: { email } });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+
+    if (!user || user.password !== password) {
       return NextResponse.json({ error: 'Credenciales incorrectas' }, { status: 401 });
     }
 
-    // Excluir password al responder
+    
     const { password: _, ...userSafe } = user;
     return NextResponse.json({ user: userSafe });
   }
