@@ -65,7 +65,7 @@ model Envio {
   origen   Almacen  @relation("OrigenAlmacen", fields: [origenCodigo], references: [id])
   destino  Almacen  @relation("DestinoAlmacen", fields: [destinoCodigo], references: [id])
   empleado Usuario  @relation("EmpleadoEnvio", fields: [EmpleadoId], references: [id])
-  factura  Factura? @relation("EnvioFactura")
+  facturas Factura[]
 }
 
 model Factura {
@@ -75,12 +75,12 @@ model Factura {
   metodoPago     String
   monto          Float
   cantidadPiezas Int
-  envioNumero    Int              @unique
+  envioNumero    Int
   clienteId      Int
   detalles       DetalleFactura[]
 
   // Relaciones
-  envio   Envio   @relation("EnvioFactura", fields: [envioNumero], references: [numero])
+  envio   Envio    @relation(fields: [envioNumero], references: [numero])
   cliente Usuario @relation(fields: [clienteId], references: [id])
 }
 

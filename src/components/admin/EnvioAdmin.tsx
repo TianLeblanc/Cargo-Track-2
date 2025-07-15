@@ -159,6 +159,7 @@ export default function EnvioTabla() {
 
   const handleOpenCreate = () => {
     resetForm();
+    setEnvioSeleccionado(null);
     openModal();
   };
 
@@ -171,6 +172,7 @@ export default function EnvioTabla() {
       fechallegada: envio.fechallegada ? new Date(envio.fechallegada) : null,
       estado: envio.estado
     });
+    setEnvioSeleccionado(envio.numero);
     openModal();
   };
 
@@ -195,11 +197,26 @@ export default function EnvioTabla() {
       EmpleadoId: user?.id
     };
 
-    const res = await fetch('/api/envioAdmin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataToSend)
-    });
+    let res;
+    let estadoAnterior = null;
+    if (envioSeleccionado) {
+      // Obtener el estado anterior del envío
+      const envioAnt = envios.find(e => e.numero === envioSeleccionado);
+      estadoAnterior = envioAnt?.estado;
+      // Editar
+      res = await fetch(`/api/envioAdmin/${envioSeleccionado}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSend)
+      });
+    } else {
+      // Crear
+      res = await fetch('/api/envioAdmin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSend)
+      });
+    }
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({})); // Manejo seguro si la respuesta no es JSON
@@ -207,19 +224,46 @@ export default function EnvioTabla() {
     }
 
     const responseData = await res.json();
-    console.log('Envío creado:', responseData);
+    console.log(envioSeleccionado ? 'Envío editado:' : 'Envío creado:', responseData);
 
-    alert("Envío creado correctamente");
-    await fetchData(); // Añadido await para asegurar que se complete
+    // Si se editó y el estado cambió, actualizar paquetes
+    if (envioSeleccionado && estadoAnterior && estadoAnterior !== formData.estado) {
+      let estadoPaquete = '';
+      if (formData.estado === 'en puerto de salida') {
+        estadoPaquete = 'En almacén';
+      } else if (formData.estado === 'en transito') {
+        estadoPaquete = 'En tránsito';
+      } else if (formData.estado === 'en destino') {
+        estadoPaquete = 'Disponible para despacho';
+      }
+      const envioNumero = typeof envioSeleccionado === 'string' ? parseInt(envioSeleccionado) : envioSeleccionado;
+      console.log('Llamando a /api/paquete/actualizar-estado-masivo desde handleSubmit con:', { envioNumero, estado: estadoPaquete });
+      const resp = await fetch(`/api/paquete/actualizar-estado-masivo`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ envioNumero, estado: estadoPaquete })
+      });
+      let respData = null;
+      try {
+        respData = await resp.json();
+      } catch (e) {
+        respData = { error: 'No JSON response' };
+      }
+      console.log('Respuesta actualizar-estado-masivo (handleSubmit):', resp.status, respData);
+      if (!resp.ok) {
+        alert(`Error al actualizar paquetes: ${respData?.message || resp.status}`);
+      }
+    }
+
+    alert(envioSeleccionado ? "Envío editado correctamente" : "Envío creado correctamente");
+    await fetchData();
     closeModal();
     resetForm();
+    setEnvioSeleccionado(null);
   } catch (error) {
     console.error("Error al guardar envío:", error);
-    // Manejo seguro del mensaje de error
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido al guardar el envío';
     alert(`Error al guardar el envío: ${errorMessage}`);
-    
-    // Forzar recarga de datos si hay error
     try {
       await fetchData();
     } catch (fetchError) {
@@ -325,6 +369,7 @@ export default function EnvioTabla() {
     }
 
     try {
+      // Actualizar el estado del envío
       const res = await fetch(`/api/envioAdmin/${numero}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -333,11 +378,46 @@ export default function EnvioTabla() {
 
       if (!res.ok) throw new Error('Error al actualizar estado');
 
-      alert("Estado actualizado correctamente");
+      // Determinar el estado de los paquetes según el estado del envío
+      let estadoPaquete = '';
+      if (nuevoEstado === 'en puerto de salida') {
+        estadoPaquete = 'En almacén';
+      } else if (nuevoEstado === 'en transito') {
+        estadoPaquete = 'En tránsito';
+      } else if (nuevoEstado === 'en destino') {
+        estadoPaquete = 'Disponible para despacho';
+      }
+
+      // Asegurar que envioNumero es number
+      const envioNumero = typeof numero === 'string' ? parseInt(numero) : numero;
+
+      // Actualizar el estado de los paquetes asociados al envío
+      console.log('Llamando a /api/paquete/actualizar-estado-masivo con:', { envioNumero, estado: estadoPaquete });
+      const resp = await fetch(`/api/paquete/actualizar-estado-masivo`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ envioNumero, estado: estadoPaquete })
+      });
+      console.log('Llamada a /api/paquete/actualizar-estado-masivo finalizada');
+
+      let respData = null;
+      try {
+        respData = await resp.json();
+      } catch (e) {
+        respData = { error: 'No JSON response' };
+      }
+      console.log('Respuesta actualizar-estado-masivo:', resp.status, respData);
+
+      if (!resp.ok) {
+        alert(`Error al actualizar paquetes: ${respData?.message || resp.status}`);
+        throw new Error(respData?.message || 'Error al actualizar paquetes');
+      }
+
+      alert("Estado actualizado correctamente\n" + JSON.stringify(respData, null, 2));
       fetchData();
     } catch (error) {
       console.error("Error al actualizar estado:", error);
-      alert("Error al actualizar estado");
+      alert("Error al actualizar estado: " + (error instanceof Error ? error.message : error));
     }
   };
 
@@ -435,7 +515,6 @@ export default function EnvioTabla() {
                     mode="single"
                     onChange={(dates) => handleDateChange('fechasalida', dates)}
                     defaultDate={formData.fechasalida}
-                    label="Fecha de Salida*"
                 />
               </div>
               <div>
@@ -444,7 +523,6 @@ export default function EnvioTabla() {
                     id="fecha-llegada"
                     mode="single"
                     onChange={(dates) => handleDateChange('fechallegada', dates)}
-                    label="Fecha de Llegada (estimada)"
                     defaultDate={formData.fechallegada || undefined}
                     placeholder="Seleccione fecha de llegada"
                 />
@@ -532,25 +610,25 @@ export default function EnvioTabla() {
         </Modal>
 
         {/* Tabla */}
-        <div className="overflow-x-auto">
+        <div className="max-w-full overflow-x-auto">
           <Table>
             <TableHeader className="bg-gray-50 dark:bg-gray-800">
-              <TableRow className="text-center">
-                <TableCell isHeader>#</TableCell>
-                <TableCell isHeader>Tipo</TableCell>
-                <TableCell isHeader>Origen → Destino</TableCell>
-                <TableCell isHeader>Fechas</TableCell>
-                <TableCell isHeader>Estado</TableCell>
-                <TableCell isHeader>Paquetes</TableCell>
-                <TableCell isHeader>Acciones</TableCell>
+              <TableRow className="text-sm text-left">
+                <TableCell isHeader className="py-3">#</TableCell>
+                <TableCell isHeader className="py-3">Tipo</TableCell>
+                <TableCell isHeader className="py-3">Origen → Destino</TableCell>
+                <TableCell isHeader className="py-3">Fechas</TableCell>
+                <TableCell isHeader className="py-3">Estado</TableCell>
+                <TableCell isHeader className="py-3">Paquetes</TableCell>
+                <TableCell isHeader className="py-3">Acciones</TableCell>
               </TableRow>
             </TableHeader>
-            <TableBody className="text-center">
+            <TableBody className="text-left divide-y divide-gray-200">
               {envios.map((envio, index) => (
-                <TableRow key={envio.numero} className={index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800'}>
+                <TableRow key={envio.numero} className={index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-800'}>
                   <TableCell className="text-sm font-semibold">ENV-{envio.numero}</TableCell>
                   <TableCell>
-                    <div className="flex items-center justify-center h-full min-h-[32px]">
+                    <div className="flex items-left justify-left mx-1 h-full min-h-[32px]">
                       {envio.tipo === 'barco' ? (
                         <ShipIcon className="w-5 h-5" />
                       ) : (
@@ -559,13 +637,13 @@ export default function EnvioTabla() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="space-y-1">
-                      <p className="font-medium">{envio.origen.ciudad}, {envio.origen.pais}</p>
-                      <p className="font-medium">{envio.destino.ciudad}, {envio.destino.pais}</p>
+                    <div className="text-sm font-medium space-y-1 my-2">
+                      <p>{envio.origen.ciudad}, {envio.origen.pais}</p>
+                      <p>{envio.destino.ciudad}, {envio.destino.pais}</p>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="space-y-1">
+                    <div className="text-sm space-y-1">
                       <p>Salida: {new Date(envio.fechasalida).toLocaleDateString('es-ES')}</p>
                       {envio.fechallegada && (
                         <p>
@@ -575,11 +653,11 @@ export default function EnvioTabla() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <p>{envio.estado}</p>
+                    <p className="text-sm">{envio.estado}</p>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-sm">
                     {envio.paquetes.length > 0 ? (
-                      <div className="text-sm">
+                      <div>
                         <p>{envio.paquetes.length} paquete(s)</p>
                         <p className="text-gray-500">
                           {envio.paquetes.slice(0, 2).map(p => `PKG-${p.id}`).join(', ')}
@@ -587,11 +665,11 @@ export default function EnvioTabla() {
                         </p>
                       </div>
                     ) : (
-                      <span className="text-gray-400">Sin paquetes</span>
+                      <span className="text-gray-600">Sin paquetes</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex justify-center gap-2">
+                    <div className="flex justify-left gap-2">
                       <Button
                         className="hover:bg-teal-500 hover:text-white"
                         variant="outline"

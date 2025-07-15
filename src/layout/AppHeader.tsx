@@ -6,12 +6,9 @@ import { useSidebar } from "@/context/SidebarContext";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState ,useEffect,useRef} from "react";
-import {useAuth } from "@/context/AuthContext";
-
-
 
 const AppHeader: React.FC = () => {
-  // const { user } = useAuth();
+
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();

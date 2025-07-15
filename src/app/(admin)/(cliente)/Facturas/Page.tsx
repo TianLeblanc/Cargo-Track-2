@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import React from "react";
-import FacturasTabla from "@/components/NoSeUsanPeroMegustan/FacturasTabla";
+import FacturasTabla from "@/components/empleado/FacturasTabla";
 
 export const metadata: Metadata = {
   title: "Cargo Track",

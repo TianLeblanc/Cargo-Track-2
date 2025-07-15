@@ -292,31 +292,31 @@ export default function PaquetesTabla() {
 
       <div className="max-w-full overflow-x-auto">
         <Table>
-          <TableHeader className="border-y border-gray-100 dark:border-gray-800">
-            <TableRow> 
-              <TableCell isHeader className="py-3 text-left">ID</TableCell>
-              <TableCell isHeader className="py-3 text-left">Descripción</TableCell>
-              <TableCell isHeader className="py-3 text-left">Ubicación</TableCell>
-              <TableCell isHeader className="py-3 text-left">Envío</TableCell>
-              <TableCell isHeader className="py-3 text-left">Estado</TableCell>
-              <TableCell isHeader className="py-3 text-left">Acciones</TableCell>
+          <TableHeader className="border-y border-gray-300 dark:border-gray-800">
+            <TableRow className="text-sm text-left"> 
+              <TableCell isHeader className="py-3">ID</TableCell>
+              <TableCell isHeader className="py-3">Descripción</TableCell>
+              <TableCell isHeader className="py-3">Ubicación</TableCell>
+              <TableCell isHeader className="py-3">Envío</TableCell>
+              <TableCell isHeader className="py-3">Estado</TableCell>
+              <TableCell isHeader className="py-3">Acciones</TableCell>
             </TableRow>
           </TableHeader>
 
-          <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {paquetes.map((paquete) => (
-              <TableRow key={paquete.id}>
-                <TableCell className="text-xs">
+          <TableBody className="divide-y divide-gray-300 dark:divide-gray-800">
+            {paquetes.map((paquete, index) => (
+              <TableRow key={paquete.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-800'}>
+                <TableCell className="text-sm font-semibold">
                   PAQ-{paquete.id.toString().padStart(4, '0')}
                 </TableCell>
-                <TableCell className="text-sm text-gray-700 dark:text-gray-300">
+                <TableCell className="text-sm text-gray-800 dark:text-gray-300">
                   {paquete.descripcion}
                 </TableCell>
                 <TableCell className="text-sm">
                   {paquete.almacen.ciudad}, {paquete.almacen.estado}
                 </TableCell>
-                <TableCell className="text-xs">
-                  {paquete.envio ? `ENV-${paquete.envio.numero}` : 'No asignado'}
+                <TableCell className="text-sm">
+                  {paquete.envio ? `ENV-${paquete.envio.numero}` : 'NO ASIGNADO'}
                 </TableCell>
                 <TableCell>
                   <Badge
@@ -335,8 +335,9 @@ export default function PaquetesTabla() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 my-1">
                     <Button
+                      className="hover:bg-yellow-500 hover:text-white"
                       variant="outline"
                       size="xs"
                       onClick={() => openDetailsModal(paquete)}
@@ -344,9 +345,9 @@ export default function PaquetesTabla() {
                     >
                     </Button>
                     <Button
+                      className="hover:bg-red-500 hover:text-white"
                       variant="outline"
                       size="xs"
-                      color="danger"
                       onClick={() => openDeleteModal(paquete)}
                       startIcon={<TrashIcon className="w-4 h-4" />}
                     >

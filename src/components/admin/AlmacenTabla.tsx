@@ -9,7 +9,7 @@ import Button from "@/components/ui/button/Button";
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import PhoneInput from "@/components/form/group-input/PhoneInput";
-import { PencilIcon, TrashIcon, PlusIcon, FilterIcon, ListIcon } from "lucide-react";
+import { PencilIcon, TrashIcon, PlusIcon, FilterIcon, ListIcon, SearchIcon } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { AlmacenService } from "@/services/almacenService";
 
@@ -153,6 +153,7 @@ export default function AlmacenTabla() {
   const almacenesFiltrados = almacenes.filter((almacen) => {
     const term = searchTerm.toLowerCase();
     return (
+      almacen.id.toString().includes(term) ||
       almacen.linea1.toLowerCase().includes(term) ||
       (almacen.linea2 && almacen.linea2.toLowerCase().includes(term)) ||
       almacen.ciudad.toLowerCase().includes(term) ||
@@ -177,34 +178,9 @@ export default function AlmacenTabla() {
         <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-center sm:justify-between sm:gap-x-4">
           <h2 className="text-xl font-bold text-gray-800 dark:text-white">Gestión de Almacenes</h2>
           <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0 max-w-full">
-            <Button 
-              onClick={handleOpenCreate}
-              className="hover:bg-green-500 hover:text-white whitespace-nowrap" 
-              size="sm"
-              variant="outline" 
-              startIcon={<PlusIcon className="w-5 h-5"/>}
-            >
-              Agregar Almacén
-            </Button>
-
+            
             {/* Filtro y barra de búsqueda */}
             <div className="relative flex items-center gap-2">
-              <Button
-                onClick={() => {
-                  setShowSearch((prev) => !prev);
-                  setTimeout(() => {
-                    if (!showSearch && searchInputRef.current) {
-                      searchInputRef.current.focus();
-                    }
-                  }, 100);
-                }}
-                size="sm"
-                variant="outline"
-                className="hover:bg-sky-500 hover:text-white whitespace-nowrap"
-                startIcon={<FilterIcon className="w-5 h-5"/>}
-              >
-                Filtrar
-              </Button>
               {showSearch && (
                 <input
                   ref={searchInputRef}
@@ -216,14 +192,39 @@ export default function AlmacenTabla() {
                   style={{ minWidth: 180, maxWidth: 250 }}
                 />
               )}
+              <Button
+                onClick={() => {
+                  setShowSearch((prev) => !prev);
+                  setTimeout(() => {
+                    if (!showSearch && searchInputRef.current) {
+                      searchInputRef.current.focus();
+                    }
+                  }, 100);
+                }}
+                size="xs"
+                variant="outline"
+                className="hover:bg-sky-500 hover:text-white whitespace-nowrap"
+                startIcon={<SearchIcon className="w-5 h-5"/>}
+              >
+              </Button>
             </div>
+            
+            <Button 
+              onClick={handleOpenCreate}
+              className="hover:bg-green-500 hover:text-white whitespace-nowrap" 
+              size="xs"
+              variant="outline" 
+              startIcon={<PlusIcon className="w-5 h-5"/>}
+            >
+              Agregar Almacén
+            </Button>
 
             <Button
               onClick={() => {
                 setSearchTerm("");
                 setShowSearch(false);
               }}
-              size="sm"
+              size="xs"
               variant="outline"
               className="hover:bg-gray-500 hover:text-white whitespace-nowrap"
               startIcon={<ListIcon className="w-5 h-5"/>}
@@ -288,21 +289,21 @@ export default function AlmacenTabla() {
         </Modal>
 
         {/* Tabla */}
-        <div className="overflow-x-auto">
+        <div className="max-w-full overflow-x-auto">
           <Table>
-            <TableHeader className="bg-gray-50 dark:bg-gray-800">
-              <TableRow className="text-center">
-                <TableCell isHeader>#</TableCell>
-                <TableCell isHeader>Dirección</TableCell>
-                <TableCell isHeader>Teléfono</TableCell>
-                <TableCell isHeader>Ubicación</TableCell>
-                <TableCell isHeader>Acciones</TableCell>
+            <TableHeader className="border-y border-gray-300">
+              <TableRow className="text-sm text-left">
+                <TableCell isHeader className="py-3">#</TableCell>
+                <TableCell isHeader className="py-3">Dirección</TableCell>
+                <TableCell isHeader className="py-3">Teléfono</TableCell>
+                <TableCell isHeader className="py-3">Ubicación</TableCell>
+                <TableCell isHeader className="py-3">Acciones</TableCell>
               </TableRow>
             </TableHeader>
-            <TableBody className="text-center">
+            <TableBody className="divide-y divide-gray-300 dark:divide-gray-800">
               {almacenesFiltrados.map((almacen, index) => (
-                <TableRow key={almacen.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800'}>
-                  <TableCell className="font-semibold">{almacen.id}</TableCell>
+                <TableRow key={almacen.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-800'}>
+                  <TableCell className="text-sm font-semibold">ALM-{almacen.id}</TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <p className="font-medium">{almacen.linea1}</p>
@@ -315,7 +316,7 @@ export default function AlmacenTabla() {
                     <p className="text-sm text-gray-500">{almacen.pais} {almacen.codpostal}</p>
                   </TableCell>
                   <TableCell>
-                    <div className="flex justify-center gap-2">
+                    <div className="flex justify-left gap-2">
                       <Button
                         className="hover:bg-yellow-500 hover:text-white"
                         variant="outline"

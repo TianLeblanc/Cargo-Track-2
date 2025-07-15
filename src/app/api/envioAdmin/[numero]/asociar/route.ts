@@ -61,33 +61,27 @@ export async function POST(req: NextRequest, { params }: { params: { numero: str
           estado: `Envío ${envio.estado}`
         }
       });
-      
+
       // Calcular el monto total y los detalles de la factura
       let montoTotal = 0;
-      const detallesFactura = paquetes.map(paquete => {
+      type DetalleFacturaInput = { monto: number; idPaquete: number };
+      const detallesFactura: DetalleFacturaInput[] = paquetes.map(paquete => {
         let monto = 0;
-        
         if (envio.tipo === 'barco') {
-          // $25 por pie cúbico (mínimo $35)
           monto = Math.max(25 * (paquete.volumen || 1), 35);
         } else {
-          // $7 por libra o volumen (lo que sea mayor, mínimo $45)
           const porPeso = 7 * (paquete.peso || 0);
           const porVolumen = 7 * (paquete.volumen || 0);
           monto = Math.max(Math.max(porPeso, porVolumen), 45);
         }
-        
         montoTotal += monto;
-        
         return {
-          descripcion: paquete.descripcion,
-          cantidad: 1,
-          monto: monto,  // Cambiado de precioUnitario a monto
+          monto,
           idPaquete: paquete.id
         };
       });
 
-      // Crear la factura
+      // Crear la factura sin detalles primero
       const factura = await prisma.factura.create({
         data: {
           estado: false, // No pagado inicialmente
@@ -95,16 +89,27 @@ export async function POST(req: NextRequest, { params }: { params: { numero: str
           monto: montoTotal,
           cantidadPiezas: paquetes.length,
           envioNumero: envioNumero,
-          clienteId: clienteId,
-          detalles: {
-            create: detallesFactura.map(detalle => ({
-              descripcion: detalle.descripcion,
-              cantidad: detalle.cantidad,
+          clienteId: clienteId
+        }
+      });
+
+      // Crear los detalles de la factura con numero incremental
+      await Promise.all(
+        detallesFactura.map((detalle, idx) =>
+          prisma.detalleFactura.create({
+            data: {
+              idFactura: factura.numero,
+              numero: idx + 1,
               monto: detalle.monto,
               idPaquete: detalle.idPaquete
-            }))
-          }
-        },
+            }
+          })
+        )
+      );
+
+      // Obtener la factura completa con detalles y cliente
+      const facturaCompleta = await prisma.factura.findUnique({
+        where: { numero: factura.numero },
         include: {
           detalles: true,
           cliente: {
@@ -117,7 +122,7 @@ export async function POST(req: NextRequest, { params }: { params: { numero: str
         }
       });
 
-      return { factura, paquetesAsociados: paquetes.length };
+      return { factura: facturaCompleta, paquetesAsociados: paquetes.length };
     });
 
     return NextResponse.json({
