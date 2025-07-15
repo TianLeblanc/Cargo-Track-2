@@ -19,6 +19,7 @@ import {
   UserCircleIcon,
   GroupIcon,
 } from "../icons/index";
+import { PackageIcon, WarehouseIcon, ReceiptIcon, PlaneTakeoffIcon } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -29,7 +30,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: <TableIcon />,
+    icon: <PackageIcon />,
     name: "Paquete",
     path: "Paquete",
   },
@@ -44,17 +45,17 @@ const navItems: NavItem[] = [
     path: "/Envios",
   },
   {
-    icon: <MailIcon />,
+    icon: <ReceiptIcon />,
     name: "Facturas",
     path: "/Facturas",
   },
   {
-    icon: <MailIcon />,
+    icon: <PlaneTakeoffIcon />,
     name: "envios",
     path: "/envio",
   },
   {
-    icon: <CalenderIcon />,
+    icon: <WarehouseIcon />,
     name: "Almacen",
     path: "/Almacenes",
   },

@@ -9,7 +9,7 @@ import Button from "@/components/ui/button/Button";
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import Select from "@/components/form/Select";
-import { PencilIcon, TrashIcon, PackagePlusIcon, PlaneIcon, ShipIcon } from "lucide-react";
+import { PencilIcon, TrashIcon, PackagePlusIcon, PlaneIcon, ShipIcon, PlusIcon } from "lucide-react";
 import { CheckCircleIcon } from "@/icons";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -100,52 +100,39 @@ export default function EnvioTabla() {
   }, []);
 
   const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      // Obtener envíos con sus relaciones
-      const enviosRes = await fetch('/api/envioAdmin?include=origen,destino,paquetes,paquetes.cliente');
-      if (!enviosRes.ok) throw new Error('Error al obtener envíos');
-      const enviosData = await enviosRes.json();
-      setEnvios(enviosData);
+  try {
+    setLoading(true);
+    
+    const [enviosRes, almacenesRes, paquetesRes, usuariosRes] = await Promise.all([
+      fetch('/api/envioAdmin?include=origen,destino,paquetes,paquetes.cliente'),
+      fetch('/api/almacen'),
+      fetch('/api/paquete?disponibles=true'),
+      fetch('/api/usuarios')
+    ]);
 
-      // Obtener almacenes
-      const almacenesRes = await fetch('/api/almacen');
-      if (!almacenesRes.ok) throw new Error('Error al obtener almacenes');
-      const almacenesData = await almacenesRes.json();
-      setAlmacenes(almacenesData);
-      
-      // Establecer valores por defecto para origen y destino
-      if (almacenesData.length > 0) {
-        setFormData(prev => ({
-          ...prev,
-          origenCodigo: almacenesData[0].id,
-          destinoCodigo: almacenesData.length > 1 ? almacenesData[1].id : almacenesData[0].id
-        }));
-      }
-
-
-
-      // Obtener paquetes disponibles (sin envío)
-      const paquetesRes = await fetch('/api/paquete?disponibles=true');
-      if (!paquetesRes.ok) throw new Error('Error al obtener paquetes disponibles');
-      const paquetesData: Paquete[] = await paquetesRes.json();
-      setPaquetesDisponibles(paquetesData);
-
-      // Obtener todos los usuarios
-      const usuariosRes = await fetch('/api/usuarios');
-      if (!usuariosRes.ok) throw new Error('Error al obtener usuarios');
-      const usuariosData: Usuario[] = await usuariosRes.json();
-      setUsuarios(usuariosData);
-
-    } catch (error) {
-      console.error("Error al cargar datos:", error);
-      alert("Error al cargar datos");
-    } finally {
-      setLoading(false);
+    if (!enviosRes.ok || !almacenesRes.ok || !paquetesRes.ok || !usuariosRes.ok) {
+      throw new Error('Error al cargar datos');
     }
-  };
 
+    const [enviosData, almacenesData, paquetesData, usuariosData] = await Promise.all([
+      enviosRes.json(),
+      almacenesRes.json(),
+      paquetesRes.json(),
+      usuariosRes.json()
+    ]);
+
+    setEnvios(enviosData);
+    setAlmacenes(almacenesData);
+    setPaquetesDisponibles(paquetesData);
+    setUsuarios(usuariosData);
+
+  } catch (error) {
+    console.error("Error al cargar datos:", error);
+    alert("Error al cargar datos. Por favor recarga la página.");
+  } finally {
+    setLoading(false);
+  }
+};
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -188,32 +175,58 @@ export default function EnvioTabla() {
   };
 
  const handleSubmit = async () => {
-    try {
-      const dataToSend = {
-        ...formData,
-        EmpleadoId: user?.id
-      };
-      console.log('Datos enviados a /api/envioAdmin:', dataToSend);
-      const res = await fetch('/api/envioAdmin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToSend)
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Respuesta error /api/envioAdmin:', errorText);
-        throw new Error('Error al guardar el envío');
-      }
-
-      alert("Envío guardado correctamente");
-      fetchData();
-      closeModal();
-    } catch (error) {
-      console.error("Error al guardar envío:", error);
-      alert("Error al guardar el envío");
+  try {
+    // Validar que origen y destino son diferentes
+    if (formData.origenCodigo === formData.destinoCodigo) {
+      alert("El origen y el destino no pueden ser el mismo");
+      return;
     }
-  };
+
+    // Validar fecha de llegada si existe
+    if (formData.fechallegada && formData.fechallegada < formData.fechasalida) {
+      alert("La fecha de llegada no puede ser anterior a la fecha de salida");
+      return;
+    }
+
+    const dataToSend = {
+      ...formData,
+      fechasalida: formData.fechasalida.toISOString(),
+      fechallegada: formData.fechallegada ? formData.fechallegada.toISOString() : null,
+      EmpleadoId: user?.id
+    };
+
+    const res = await fetch('/api/envioAdmin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dataToSend)
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({})); // Manejo seguro si la respuesta no es JSON
+      throw new Error(errorData.message || 'Error al guardar el envío');
+    }
+
+    const responseData = await res.json();
+    console.log('Envío creado:', responseData);
+
+    alert("Envío creado correctamente");
+    await fetchData(); // Añadido await para asegurar que se complete
+    closeModal();
+    resetForm();
+  } catch (error) {
+    console.error("Error al guardar envío:", error);
+    // Manejo seguro del mensaje de error
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido al guardar el envío';
+    alert(`Error al guardar el envío: ${errorMessage}`);
+    
+    // Forzar recarga de datos si hay error
+    try {
+      await fetchData();
+    } catch (fetchError) {
+      console.error("Error al recargar datos:", fetchError);
+    }
+  }
+};
 
   const handleDelete = (numero: number) => {
     setDeleteId(numero);
@@ -343,10 +356,11 @@ export default function EnvioTabla() {
           <h2 className="text-xl font-bold text-gray-800 dark:text-white">Gestión de Envíos</h2>
           {user?.rol === "admin" && (
             <Button 
-              onClick={handleOpenCreate} 
+              onClick={handleOpenCreate}
+              className="hover:bg-sky-500 hover:text-white"
               size="sm" 
-              variant="primary" 
-              startIcon={<CheckCircleIcon />}
+              variant="outline" 
+              startIcon={<PlusIcon />}
             >
               Crear Envío
             </Button>

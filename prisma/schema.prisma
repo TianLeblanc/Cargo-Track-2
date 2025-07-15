@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  
 }
 
 datasource db {
@@ -50,11 +50,11 @@ model Usuario {
 }
 
 model Envio {
-  numero       Int       @id
+  numero       Int       @id @default(autoincrement())
   tipo         String
   estado       String
-  fechasalida  DateTime
-  fechallegada DateTime?
+  fechasalida  DateTime @db.Date
+  fechallegada DateTime? @db.Date
 
   origenCodigo  Int
   destinoCodigo Int

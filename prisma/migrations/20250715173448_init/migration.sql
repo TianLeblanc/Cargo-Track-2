@@ -30,11 +30,11 @@ CREATE TABLE "Usuario" (
 
 -- CreateTable
 CREATE TABLE "Envio" (
-    "numero" INTEGER NOT NULL,
+    "numero" SERIAL NOT NULL,
     "tipo" TEXT NOT NULL,
     "estado" TEXT NOT NULL,
-    "fechasalida" TIMESTAMP(3) NOT NULL,
-    "fechallegada" TIMESTAMP(3),
+    "fechasalida" DATE NOT NULL,
+    "fechallegada" DATE,
     "origenCodigo" INTEGER NOT NULL,
     "destinoCodigo" INTEGER NOT NULL,
     "EmpleadoId" INTEGER NOT NULL,
