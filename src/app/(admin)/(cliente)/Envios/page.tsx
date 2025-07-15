@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import React from "react";
-import EnviosTabla  from "@/components/NoSeUsanPeroMegustan/EnviosTabla";
+import EnviosTabla  from "@/components/empleado/EnviosTabla";
 
 
 export const metadata: Metadata = {

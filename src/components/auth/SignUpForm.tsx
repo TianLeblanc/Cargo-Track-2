@@ -9,10 +9,10 @@ import Label from "@/components/form/Label";
 
 export default function SignUpForm() {
   const [formData, setFormData] = useState({
-    fname: "",
-    sname: "",
-    flastname: "",
-    slastname: "",
+    p_name: "",
+    s_name: "",
+    p_apellido: "",
+    s_apellido: "",
     email: "",
     password: "",
     cedula: "",
@@ -36,17 +36,16 @@ export default function SignUpForm() {
     setIsLoading(true);
     setError("");
 
-    const nombre = `${formData.fname} ${formData.sname}`.trim();
-    const apellido = `${formData.flastname} ${formData.slastname}`.trim();
-
     try {
       console.log("Enviando datos del formulario:", formData);
       await register({
         email: formData.email,
         password: formData.password,
         cedula: formData.cedula,
-        nombre,
-        apellido,
+        p_nombre: formData.p_name,
+        s_nombre: formData.s_name,
+        p_apellido: formData.p_apellido,
+        s_apellido: formData.s_apellido,
         telefono: formData.telefono,
         rol: "cliente", // Rol por defecto
       });
@@ -102,8 +101,8 @@ export default function SignUpForm() {
                 <div>
                   <Label>Primer Nombre *</Label>
                   <Input
-                    name="fname"
-                    value={formData.fname}
+                    name="p_name"
+                    value={formData.p_name}
                     onChange={handleChange}
                     placeholder="Ej: María"
                   />
@@ -111,8 +110,8 @@ export default function SignUpForm() {
                 <div>
                   <Label>Segundo Nombre</Label>
                   <Input
-                    name="sname"
-                    value={formData.sname}
+                    name="s_name"
+                    value={formData.s_name}
                     onChange={handleChange}
                     placeholder="Ej: Alejandra"
                   />
@@ -123,8 +122,8 @@ export default function SignUpForm() {
                 <div>
                   <Label>Primer Apellido *</Label>
                   <Input
-                    name="flastname"
-                    value={formData.flastname}
+                    name="p_apellido"
+                    value={formData.p_apellido}
                     onChange={handleChange}
                     placeholder="Ej: Rodríguez"
                   />
@@ -132,8 +131,8 @@ export default function SignUpForm() {
                 <div>
                   <Label>Segundo Apellido</Label>
                   <Input
-                    name="slastname"
-                    value={formData.slastname}
+                    name="s_apellido"
+                    value={formData.s_apellido}
                     onChange={handleChange}
                     placeholder="Ej: Pérez"
                   />

@@ -26,8 +26,8 @@ interface PackageDetails {
   };
   empleado: {
     id: number;
-    nombre: string;
-    apellido: string;
+    p_nombre: string;
+    p_apellido: string;
   };
   envio?: {
     numero: number;
@@ -45,8 +45,8 @@ interface PackageDetails {
       metodoPago: string;
       monto: number;
       cliente: {
-        nombre: string;
-        apellido: string;
+        p_nombre: string;
+        p_apellido: string;
       };
     };
   };
@@ -56,8 +56,8 @@ interface PackageDetails {
       metodoPago: string;
       monto: number;
       cliente: {
-        nombre: string;
-        apellido: string;
+        p_nombre: string;
+        p_apellido: string;
       };
     };
   }>;
@@ -68,7 +68,7 @@ interface PackageDetails {
       ciudad: string;
     };
     empleado: {
-      nombre: string;
+      p_nombre: string;
     };
   }>;
 }
@@ -227,7 +227,7 @@ export default function Tracking() {
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400">Registrado por</p>
-                          <p>{packageData.empleado.nombre} {packageData.empleado.apellido}</p>
+                          <p>{packageData.empleado.p_nombre} {packageData.empleado.p_apellido}</p>
                         </div>
                       </div>
                     </div>
@@ -288,7 +288,7 @@ export default function Tracking() {
                               <TableCell>{new Date(item.fecha).toLocaleString()}</TableCell>
                               <TableCell>{item.estado}</TableCell>
                               <TableCell>{item.ubicacion.ciudad}</TableCell>
-                              <TableCell>{item.empleado.nombre}</TableCell>
+                              <TableCell>{item.empleado.p_nombre}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -316,7 +316,7 @@ export default function Tracking() {
                         </div>
                         <div className="md:col-span-3">
                           <p className="text-sm text-gray-500 dark:text-gray-400">Cliente</p>
-                          <p>{packageData.envio.factura.cliente.nombre} {packageData.envio.factura.cliente.apellido}</p>
+                          <p>{packageData.envio.factura.cliente.p_nombre} {packageData.envio.factura.cliente.p_apellido}</p>
                         </div>
                       </div>
                     )}
@@ -337,7 +337,7 @@ export default function Tracking() {
                         </div>
                         <div className="md:col-span-3">
                           <p className="text-sm text-gray-500 dark:text-gray-400">Cliente</p>
-                          <p>{detalle.factura.cliente.nombre} {detalle.factura.cliente.apellido}</p>
+                          <p>{detalle.factura.cliente.p_nombre} {detalle.factura.cliente.p_apellido}</p>
                         </div>
                       </div>
                     ))}

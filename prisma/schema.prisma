@@ -10,8 +10,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -31,46 +31,10 @@ model Almacen {
   paquetes      Paquete[]
 }
 
-
 model Usuario {
-
-  id       Int     @id @default(autoincrement())
-  cedula   String  @unique
-  nombre   String
-  nombre2  String?
-  apellido String
-  apellido2 String?
-  email    String  @unique
-  telefono String
-  password String
-  rol      String
-
-  // Relaciones
-  enviosEmpleado Envio[] @relation("EmpleadoEnvio")
-  facturas      Factura[]
-  paquetes      Paquete[]
-}
-
-model Envio {
-  numero        Int     @id @default(autoincrement())
-  tipo          String
-  estado        String
-  fechasalida   DateTime
-  fechallegada  DateTime?
-
-  origenCodigo   Int
-  destinoCodigo  Int
-  EmpleadoId     Int 
-  paquetes      Paquete[]
-
-  // Relaciones
-  origen   Almacen @relation("OrigenAlmacen", fields: [origenCodigo], references: [id])
-  destino  Almacen @relation("DestinoAlmacen", fields: [destinoCodigo], references: [id])
-  empleado Usuario @relation("EmpleadoEnvio", fields: [EmpleadoId], references: [id])
-
-  id         Int    @id @default(autoincrement())
-  cedula     String @unique
-  email      String @unique
+  id         Int     @id @default(autoincrement())
+  cedula     String  @unique
+  email      String  @unique
   p_nombre   String
   s_nombre   String?
   p_apellido String
@@ -80,7 +44,6 @@ model Envio {
   rol        String
 
   // Relaciones
-  enviosCliente  Envio[]   @relation("ClienteEnvio")
   enviosEmpleado Envio[]   @relation("EmpleadoEnvio")
   facturas       Factura[]
   paquetes       Paquete[]
@@ -96,15 +59,12 @@ model Envio {
   origenCodigo  Int
   destinoCodigo Int
   EmpleadoId    Int
-  clienteId     Int
   paquetes      Paquete[]
 
   // Relaciones
   origen   Almacen  @relation("OrigenAlmacen", fields: [origenCodigo], references: [id])
   destino  Almacen  @relation("DestinoAlmacen", fields: [destinoCodigo], references: [id])
   empleado Usuario  @relation("EmpleadoEnvio", fields: [EmpleadoId], references: [id])
-  cliente  Usuario  @relation("ClienteEnvio", fields: [clienteId], references: [id])
-
   factura  Factura? @relation("EnvioFactura")
 }
 
@@ -144,10 +104,10 @@ model Paquete {
   alto          Float
   peso          Float
   volumen       Float
-  estado        String @default("recibido en almacen")
   almacenCodigo Int
   empleadoId    Int
   envioNumero   Int?
+  estado        String
 
   // Relaciones
   almacen  Almacen          @relation(fields: [almacenCodigo], references: [id])

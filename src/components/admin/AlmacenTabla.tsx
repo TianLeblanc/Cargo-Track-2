@@ -9,9 +9,8 @@ import Button from "@/components/ui/button/Button";
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import PhoneInput from "@/components/form/group-input/PhoneInput";
-import { PencilIcon, TrashIcon } from "lucide-react";
-import { CheckCircleIcon } from "@/icons";
-import { useEffect, useState } from "react";
+import { PencilIcon, TrashIcon, PlusIcon, FilterIcon, ListIcon } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import { AlmacenService } from "@/services/almacenService";
 
 interface Almacen {
@@ -46,6 +45,9 @@ export default function AlmacenTabla() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { isOpen, openModal, closeModal } = useModal();
 
   useEffect(() => {
@@ -147,6 +149,20 @@ export default function AlmacenTabla() {
     }
   };
 
+  // Filtrado por término de búsqueda
+  const almacenesFiltrados = almacenes.filter((almacen) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      almacen.linea1.toLowerCase().includes(term) ||
+      (almacen.linea2 && almacen.linea2.toLowerCase().includes(term)) ||
+      almacen.ciudad.toLowerCase().includes(term) ||
+      almacen.estado.toLowerCase().includes(term) ||
+      almacen.pais.toLowerCase().includes(term) ||
+      almacen.telefono.toLowerCase().includes(term) ||
+      almacen.codpostal.toLowerCase().includes(term)
+    );
+  });
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -158,16 +174,63 @@ export default function AlmacenTabla() {
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="p-6">
-        <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Gestión de Almacenes</h2>
-          <Button 
-            onClick={handleOpenCreate} 
-            size="sm" 
-            variant="primary" 
-            startIcon={<CheckCircleIcon />}
-          >
-            Agregar Almacén
-          </Button>
+        <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-center sm:justify-between sm:gap-x-4">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Gestión de Almacenes</h2>
+          <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0 max-w-full">
+            <Button 
+              onClick={handleOpenCreate}
+              className="hover:bg-green-500 hover:text-white whitespace-nowrap" 
+              size="sm"
+              variant="outline" 
+              startIcon={<PlusIcon className="w-5 h-5"/>}
+            >
+              Agregar Almacén
+            </Button>
+
+            {/* Filtro y barra de búsqueda */}
+            <div className="relative flex items-center gap-2">
+              <Button
+                onClick={() => {
+                  setShowSearch((prev) => !prev);
+                  setTimeout(() => {
+                    if (!showSearch && searchInputRef.current) {
+                      searchInputRef.current.focus();
+                    }
+                  }, 100);
+                }}
+                size="sm"
+                variant="outline"
+                className="hover:bg-sky-500 hover:text-white whitespace-nowrap"
+                startIcon={<FilterIcon className="w-5 h-5"/>}
+              >
+                Filtrar
+              </Button>
+              {showSearch && (
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  className="ml-2 px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
+                  placeholder="Buscar almacén..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ minWidth: 180, maxWidth: 250 }}
+                />
+              )}
+            </div>
+
+            <Button
+              onClick={() => {
+                setSearchTerm("");
+                setShowSearch(false);
+              }}
+              size="sm"
+              variant="outline"
+              className="hover:bg-gray-500 hover:text-white whitespace-nowrap"
+              startIcon={<ListIcon className="w-5 h-5"/>}
+            >
+              Ver todo
+            </Button>
+          </div>
         </div>
 
         {/* Modal Crear/Editar */}
@@ -184,7 +247,7 @@ export default function AlmacenTabla() {
                   selectPosition="start"
                   countries={countries}
                   onChange={handlePhoneNumberChange}
-                 
+                  value={formData.telefono}
                 />
               </div>
               <div>
@@ -237,7 +300,7 @@ export default function AlmacenTabla() {
               </TableRow>
             </TableHeader>
             <TableBody className="text-center">
-              {almacenes.map((almacen, index) => (
+              {almacenesFiltrados.map((almacen, index) => (
                 <TableRow key={almacen.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800'}>
                   <TableCell className="font-semibold">{almacen.id}</TableCell>
                   <TableCell>
@@ -254,6 +317,7 @@ export default function AlmacenTabla() {
                   <TableCell>
                     <div className="flex justify-center gap-2">
                       <Button
+                        className="hover:bg-yellow-500 hover:text-white"
                         variant="outline"
                         size="xs"
                         onClick={() => handleOpenEdit(almacen)}
@@ -261,8 +325,8 @@ export default function AlmacenTabla() {
                       >
                       </Button>
                       <Button
+                        className="hover:bg-red-500 hover:text-white"
                         variant="outline"
-                        color="danger"
                         size="xs"
                         onClick={() => handleDelete(almacen.id)}
                         startIcon={<TrashIcon className="w-4 h-4" />}

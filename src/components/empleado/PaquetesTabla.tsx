@@ -3,14 +3,15 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { MaterialReactTable, useMaterialReactTable, type MRT_ColumnDef } from 'material-react-table';
 import { useTheme } from 'next-themes';
+import { Modal } from "../ui/modal";
 import Badge from '../ui/badge/Badge';
-import { Modal } from '../ui/modal';
 import Button from '@/components/ui/button/Button';
 import { PackageSearchIcon, FilterIcon, PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
 import { useModal } from '@/hooks/useModal';
 import { useAuth } from '@/context/AuthContext';
-import Input from '@/components/form/input/InputField';
-import Select from '@/components/form/Select';
+import Input from "@/components/form/input/InputField";
+import Select from "@/components/form/Select";
+
 
 // Tipos
 import { PaqueteCompleto, Almacen } from '@/types/modelsTypes';
@@ -139,6 +140,43 @@ export default function PaquetesTabla() {
     }));
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      let response;
+      if (isCreating) {
+        response = await fetch('/api/paquete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+      } else if (selected) {
+        response = await fetch(`/api/paquete/${selected.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+      }
+
+      if (!response?.ok) throw new Error('Error al guardar el paquete');
+
+      const updatedPaquete = await response.json();
+      
+      // Actualizar lista de paquetes
+      const paquetesResponse = await fetch('/api/paquete?include=almacen,envio,empleado');
+      if (!paquetesResponse.ok) throw new Error('Error al actualizar lista de paquetes');
+      const paquetesData = await paquetesResponse.json();
+      setPaquetes(paquetesData);
+
+      successModal.openModal();
+      closeModal();
+    } catch (error) {
+      console.error("Error al guardar paquete:", error);
+      errorModal.openModal();
+    }
+  };
+
   const columns = useMemo<MRT_ColumnDef<PaqueteCompleto>[]>(
     () => [
       {
@@ -149,6 +187,7 @@ export default function PaquetesTabla() {
       {
         accessorKey: 'descripcion',
         header: 'Descripción',
+        
       },
       {
         accessorKey: 'almacen',
@@ -265,6 +304,134 @@ export default function PaquetesTabla() {
           },
         }}
       />
+      {/* Modal de creación/edición */}
+            <Modal isOpen={!!selected || isCreating} onClose={closeModal} className="max-w-2xl">
+              <div className="p-6 bg-white dark:bg-gray-900 rounded-xl">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white/90 flex items-center gap-2">
+                  <PackageSearchIcon className="w-5 h-5" />
+                  {isCreating ? 'Nuevo Paquete' : `Editar Paquete PKG-${selected?.id.toString().padStart(4, '0')}`}
+                </h2>
+                
+                <form onSubmit={handleSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Información del Paquete</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
+                            <Input
+                              name="descripcion"
+                              value={formData.descripcion}
+                              onChange={handleInputChange}
+                            />
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Largo (cm)</label>
+                              <Input
+                                type="number"
+                                name="largo"
+                                value={formData.largo}
+                                onChange={handleInputChange}
+                                min="0"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ancho (cm)</label>
+                              <Input
+                                type="number"
+                                name="ancho"
+                                value={formData.ancho}
+                                onChange={handleInputChange}
+                                min="0"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alto (cm)</label>
+                              <Input
+                                type="number"
+                                name="alto"
+                                value={formData.alto}
+                                onChange={handleInputChange}
+                                min="0"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Peso (kg)</label>
+                              <Input
+                                type="number"
+                                name="peso"
+                                value={formData.peso}
+                                onChange={handleInputChange}
+                                min="0"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Volumen (m³)</label>
+                              <Input
+                                type="number"
+                                name="volumen"
+                                value={formData.volumen}
+                                disabled
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+      
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Ubicación y Estado</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Almacén</label>
+                            <Select
+                              options={almacenes.map(almacen => ({
+                                value: almacen.id.toString(),
+                                label: `${almacen.id}, ${almacen.pais}`
+                              }))}
+                              value={formData.almacenCodigo.toString()}
+                              onChange={(value) => handleSelectChange('almacenCodigo', value)}
+                            />
+                          </div>
+                          {!isCreating && (
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Estado
+                                  </label>
+                                  <Select
+                                    options={[
+                                      { value: 'recibido en almacen', label: 'Recibido en almacén' },
+                                      { value: 'en transito', label: 'En tránsito' },
+                                      { value: 'disponible para despacho', label: 'Disponible para despacho' },
+                                      { value: 'despachado', label: 'Despachado' },
+                                    ]}
+                                    value={formData.estado}
+                                    onChange={(value) => handleSelectChange('estado', value)}
+                                  />
+                                </div>
+                              )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+      
+                  <div className="flex justify-end gap-2 pt-6">
+                    <Button variant="outline" onClick={closeModal}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" variant="primary">
+                      {isCreating ? 'Crear Paquete' : 'Guardar Cambios'}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </Modal>
     </div>
+    
   );
 }

@@ -5,10 +5,10 @@ export type Rol = 'admin' | 'empleado' | 'cliente';
 export interface Usuario {
   id: number;
   cedula: string;
-  nombre: string;
-  nombre2?: string;
-  apellido: string;
-  apellido2?: string;
+  p_nombre :string;
+  s_nombre?  :string;
+  p_apellido: string;
+  s_apellido? :string;
   email: string;
   telefono: string;
   password: string;

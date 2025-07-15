@@ -19,20 +19,21 @@ import {
   actualizarUsuario,
   eliminarUsuario,
 } from "@/services/usuarioService";
+import { PencilIcon, TrashIcon, PlusIcon, FilterIcon, ListIcon } from "lucide-react";
 
 type Rol = 'admin' | 'empleado' | 'cliente';
 
 interface Usuario {
   id: number;
   cedula: string;
-  nombre: string;
-  apellido: string;
-  nombre2?: string;
-  apellido2?: string;
-  email: string;
-  telefono: string;
-  password: string;
-  rol: Rol;
+  p_nombre : string;
+  s_nombre?  :string;
+  p_apellido : string;
+  s_apellido? :string;
+  email : string;
+  telefono : string;
+  password : string;
+  rol : Rol;
 }
 
 export default function UsersTabla() {
@@ -43,10 +44,10 @@ export default function UsersTabla() {
 
   const [nuevoUsuario, setNuevoUsuario] = useState<Partial<Usuario>>({
     cedula: "",
-    nombre: "",
-    nombre2: "",
-    apellido: "",
-    apellido2: "",
+    p_nombre: "",
+    s_nombre: "",
+     p_apellido: "",
+    s_apellido: "",
     email: "",
     telefono: "",
     password: "",
@@ -98,10 +99,10 @@ export default function UsersTabla() {
     setIsModalOpen(false);
     setNuevoUsuario({
       cedula: "",
-      nombre: "",
-      nombre2: "",
-      apellido: "",
-      apellido2: "",
+      p_nombre: "",
+      s_nombre: "",
+      p_apellido: "",
+      s_apellido: "",
       email: "",
       telefono: "",
       password: "",
@@ -142,18 +143,26 @@ export default function UsersTabla() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button onClick={() => setIsModalOpen(true)} size="sm" variant="primary">
+          <Button 
+            onClick={() => setIsModalOpen(true)} 
+            className="hover:text-white hover:bg-green-600" 
+            variant="outline"  
+            size="sm"
+            startIcon={<PlusIcon className="w-5 h-5"/>}
+          >
             Nuevo Usuario
           </Button>
 
           {/* Filtro */}
           <div className="relative">
-            <button
+            <Button
               onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-xs hover:bg-gray-50"
+              variant="outline"
+              className="hover:bg-sky-500 hover:text-white"
+              startIcon={<FilterIcon className="w-5 h-5"/>}
             >
               Filtrar
-            </button>
+            </Button>
             {showFilterDropdown && (
               <div className="absolute right-0 z-10 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                 {rolesUsuario.map((role) => (
@@ -172,12 +181,14 @@ export default function UsersTabla() {
             )}
           </div>
 
-          <button
+          <Button
             onClick={() => setFilter("all")}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-xs hover:bg-gray-50"
+            variant="outline"
+            className="hover:bg-gray-500 hover:text-white"
+            startIcon={<ListIcon className="w-5 h-5"/>}
           >
             Ver todo
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -202,19 +213,19 @@ export default function UsersTabla() {
                 </div>
                 <div>
                   <Label>Primer Nombre</Label>
-                  <Input name="nombre" value={nuevoUsuario.nombre || ""} onChange={handleInputChange} />
+                  <Input name="p_nombre" value={nuevoUsuario.p_nombre || ""} onChange={handleInputChange} />
                 </div>
                 <div>
                   <Label>Segundo Nombre</Label>
-                  <Input name="nombre2" value={nuevoUsuario.nombre2 || ""} onChange={handleInputChange} />
+                  <Input name="s_nombre" value={nuevoUsuario.s_nombre || ""} onChange={handleInputChange} />
                 </div>
                 <div>
                   <Label>Primer Apellido</Label>
-                  <Input name="apellido" value={nuevoUsuario.apellido || ""} onChange={handleInputChange} />
+                  <Input name="p_apellido" value={nuevoUsuario.p_apellido || ""} onChange={handleInputChange} />
                 </div>
                 <div>
                   <Label>Segundo Apellido</Label>
-                  <Input name="apellido2" value={nuevoUsuario.apellido2 || ""} onChange={handleInputChange} />
+                  <Input name="s_apellido" value={nuevoUsuario.s_apellido || ""} onChange={handleInputChange} />
                 </div>
                 <div>
                   <Label>Email</Label>
@@ -245,7 +256,7 @@ export default function UsersTabla() {
             <Button size="sm" variant="outline" onClick={() => setIsModalOpen(false)}>
               Cancelar
             </Button>
-            <Button size="sm" onClick={handleAgregarUsuario}>
+            <Button className="hover-bg" variant="outline" size="sm" onClick={handleAgregarUsuario}>
               {nuevoUsuario.id ? "Guardar Cambios" : "Agregar Usuario"}
             </Button>
           </div>
@@ -269,17 +280,27 @@ export default function UsersTabla() {
               <TableRow key={usuario.id}>
                 <TableCell className="py-3">{usuario.cedula}</TableCell>
                 <TableCell className="py-3">
-                  {usuario.nombre} {usuario.nombre2} {usuario.apellido} {usuario.apellido2}
+                  {usuario.p_nombre} {usuario.s_nombre} {usuario.p_apellido} {usuario.s_apellido}
                 </TableCell>
                 <TableCell className="py-3 capitalize">{usuario.rol}</TableCell>
                 <TableCell className="py-3">
                   <div className="flex gap-2">
-                    <button onClick={() => handleEditarUsuario(usuario)} className="text-blue-600 hover:text-blue-800">
-                      Editar
-                    </button>
-                    <button onClick={() => handleEliminarUsuario(usuario.id)} className="text-red-600 hover:text-red-800">
-                      Eliminar
-                    </button>
+                    <Button
+                        className="hover:bg-yellow-500 hover:text-white"
+                        variant="outline"
+                        size="xs"
+                        onClick={() => handleEditarUsuario(usuario)}
+                        startIcon={<PencilIcon className="w-4 h-4" />}
+                      >
+                      </Button>
+                      <Button
+                        className="hover:bg-red-500 hover:text-white"
+                        variant="outline"
+                        size="xs"
+                        onClick={() => handleEliminarUsuario(usuario.id)}
+                        startIcon={<TrashIcon className="w-4 h-4" />}
+                      >
+                      </Button>
                   </div>
                 </TableCell>
               </TableRow>

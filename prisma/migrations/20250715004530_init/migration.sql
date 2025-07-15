@@ -16,9 +16,11 @@ CREATE TABLE "Almacen" (
 CREATE TABLE "Usuario" (
     "id" SERIAL NOT NULL,
     "cedula" TEXT NOT NULL,
-    "nombre" TEXT NOT NULL,
-    "apellido" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "p_nombre" TEXT NOT NULL,
+    "s_nombre" TEXT,
+    "p_apellido" TEXT NOT NULL,
+    "s_apellido" TEXT,
     "telefono" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "rol" TEXT NOT NULL,
@@ -36,7 +38,6 @@ CREATE TABLE "Envio" (
     "origenCodigo" INTEGER NOT NULL,
     "destinoCodigo" INTEGER NOT NULL,
     "EmpleadoId" INTEGER NOT NULL,
-    "clienteId" INTEGER NOT NULL,
 
     CONSTRAINT "Envio_pkey" PRIMARY KEY ("numero")
 );
@@ -77,6 +78,7 @@ CREATE TABLE "Paquete" (
     "almacenCodigo" INTEGER NOT NULL,
     "empleadoId" INTEGER NOT NULL,
     "envioNumero" INTEGER,
+    "estado" TEXT NOT NULL,
 
     CONSTRAINT "Paquete_pkey" PRIMARY KEY ("id")
 );
@@ -98,9 +100,6 @@ ALTER TABLE "Envio" ADD CONSTRAINT "Envio_destinoCodigo_fkey" FOREIGN KEY ("dest
 
 -- AddForeignKey
 ALTER TABLE "Envio" ADD CONSTRAINT "Envio_EmpleadoId_fkey" FOREIGN KEY ("EmpleadoId") REFERENCES "Usuario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Envio" ADD CONSTRAINT "Envio_clienteId_fkey" FOREIGN KEY ("clienteId") REFERENCES "Usuario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Factura" ADD CONSTRAINT "Factura_envioNumero_fkey" FOREIGN KEY ("envioNumero") REFERENCES "Envio"("numero") ON DELETE RESTRICT ON UPDATE CASCADE;

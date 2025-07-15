@@ -8,8 +8,10 @@ type UserRole = 'admin' | 'empleado' | 'cliente';
 interface Usuario {
   id: number;
   cedula: string;
-  nombre: string;
-  apellido: string;
+  p_nombre: string;
+  s_nombre: string;
+  p_apellido: string;
+  s_apellido: string;
   email: string;
   telefono: string;
   rol: UserRole;
@@ -23,8 +25,10 @@ interface AuthContextType {
     email: string;
     password: string;
     cedula: string;
-    nombre: string;
-    apellido: string;
+    p_nombre: string;
+    s_nombre: string;
+    p_apellido: string;
+    s_apellido: string;
     telefono: string;
     rol?: UserRole;
   }) => Promise<void>;
@@ -76,8 +80,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else if (user && isAuthPage) {
       const rolePaths: Record<UserRole, string> = {
         admin: '',
-        empleado: '/Facturas',
-        cliente: '/Paquetes'
+        empleado: '',
+        cliente: '/Tracking'
       };
       router.push(rolePaths[user.rol] || '/');
     }
@@ -108,16 +112,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     email,
     password,
     cedula,
-    nombre,
-    apellido,
+    p_nombre,
+    s_nombre,
+    p_apellido,
+    s_apellido,
     telefono,
     rol = 'cliente',
   }: {
     email: string;
     password: string;
     cedula: string;
-    nombre: string;
-    apellido: string;
+    p_nombre: string;
+    s_nombre: string;
+    p_apellido: string;
+    s_apellido: string; 
     telefono: string;
     rol?: UserRole;
   }) => {
@@ -131,8 +139,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email,
           password,
           cedula,
-          nombre,
-          apellido,
+          p_nombre,
+          s_nombre,
+          p_apellido,
+          s_apellido,
           telefono,
           rol,
         }),

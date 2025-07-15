@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface CountryCode {
   code: string;
@@ -11,22 +11,33 @@ interface PhoneInputProps {
   countries: CountryCode[];
   onChange?: (phoneNumber: string) => void;
   selectPosition?: "start" | "end";
+  value?: string;
+  defaultValue?: string;
 }
 
 const PhoneInput: React.FC<PhoneInputProps> = ({
   countries,
   onChange,
   selectPosition = "start",
+  value = "",
+  defaultValue = ""
 }) => {
   const [selectedCountry, setSelectedCountry] = useState<string>(countries[0]?.code || "");
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>(value || defaultValue);
+
+  useEffect(() => {
+    if (value !== undefined) {
+      setPhoneNumber(value);
+    }
+  }, [value]);
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCountry = e.target.value;
     setSelectedCountry(newCountry);
-    setPhoneNumber(""); // Limpiar número actual
+    const newPhoneNumber = "";
+    setPhoneNumber(newPhoneNumber);
     if (onChange) {
-      onChange(""); // Notificar cambio
+      onChange(newPhoneNumber);
     }
   };
 

@@ -3,7 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/bd';
 
 export async function POST(req: NextRequest) {
-  const { type, email, password, cedula, nombre, apellido, telefono, rol } = await req.json();
+  const { 
+    type, 
+    email, 
+    password, 
+    cedula, 
+    p_nombre, 
+    s_nombre, 
+    p_apellido, 
+    s_apellido, 
+    telefono, 
+    rol } = await req.json();
 
   if (type === 'register') {
     // Validar duplicados
@@ -16,8 +26,10 @@ export async function POST(req: NextRequest) {
       data: {
         email,
         cedula,
-        nombre,
-        apellido,
+        p_nombre,
+        s_nombre: s_nombre ?? null,
+        p_apellido,
+        s_apellido: s_apellido ?? null,
         telefono,
         rol: rol || 'cliente',
         password, 
