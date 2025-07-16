@@ -8,7 +8,6 @@ import {
   TableRow,
 } from "../ui/table";
 import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 
 interface Factura {
@@ -19,21 +18,21 @@ interface Factura {
   cantidadPiezas: number;
   pdf?: string;
   createdAt: string;
+  cliente: {
+    p_nombre: string;
+    p_apellido: string;
+    email: string;
+  };
 }
 
 export default function FacturasTabla() {
-  const { user } = useAuth();
   const [facturas, setFacturas] = useState<Factura[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchFacturas = async () => {
-      if (!user) return;
-
-        console.log("[DEBUG] clienteId desde AuthContext:", user.id);
-        
       try {
-        const res = await fetch(`/api/facturas?clienteId=${user.id}`);
+        const res = await fetch(`/api/facturas`);
         if (!res.ok) throw new Error("Error al cargar facturas");
 
         const data = await res.json();
@@ -47,7 +46,7 @@ export default function FacturasTabla() {
     };
 
     fetchFacturas();
-  }, [user]);
+  }, []);
 
   if (loading) {
     return <div className="p-4">Cargando facturas...</div>;
@@ -58,10 +57,10 @@ export default function FacturasTabla() {
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Mis Facturas
+            Todas las Facturas
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Visualización de tus facturas emitidas
+            Incluye cliente asociado
           </p>
         </div>
       </div>
@@ -71,10 +70,10 @@ export default function FacturasTabla() {
           <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
             <TableRow>
               <TableCell isHeader>ID</TableCell>
+              <TableCell isHeader>Cliente</TableCell>
               <TableCell isHeader>Estado</TableCell>
               <TableCell isHeader>Monto</TableCell>
               <TableCell isHeader>Método Pago</TableCell>
-              
               <TableCell isHeader>PDF</TableCell>
             </TableRow>
           </TableHeader>
@@ -85,6 +84,16 @@ export default function FacturasTabla() {
                 <TableCell className="py-3 font-medium">
                   FAC-{factura.numero.toString().padStart(4, '0')}
                 </TableCell>
+
+                <TableCell className="py-3">
+                  <p className="font-semibold text-gray-800 dark:text-white">
+                    {factura.cliente.p_nombre} {factura.cliente.p_apellido}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {factura.cliente.email}
+                  </p>
+                </TableCell>
+
                 <TableCell className="py-3">
                   <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                     factura.estado
@@ -94,9 +103,10 @@ export default function FacturasTabla() {
                     {factura.estado ? "Pagado" : "Generado"}
                   </span>
                 </TableCell>
+
                 <TableCell className="py-3">${factura.monto.toFixed(2)}</TableCell>
                 <TableCell className="py-3">{factura.metodoPago}</TableCell>
-                
+
                 <TableCell className="py-3">
                   {factura.pdf ? (
                     <Link

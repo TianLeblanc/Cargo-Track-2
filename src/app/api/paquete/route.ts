@@ -6,9 +6,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const include = searchParams.get('include');
     const disponibles = searchParams.get('disponibles') === 'true';
-    
-    const where = disponibles ? { envioNumero: null } : {};
-    
+    const clienteIdParam = searchParams.get('clienteId');
+
+    const where: any = disponibles ? { envioNumero: null } : {};
+
     const paquetes = await prisma.paquete.findMany({
       where,
       include: {
@@ -16,15 +17,15 @@ export async function GET(request: NextRequest) {
         envio: include?.includes('envio') ? {
           include: {
             origen: true,
-            destino: true
+            destino: true,
           }
         } : false,
         empleado: include?.includes('empleado'),
         detalles: {
           include: {
             factura: {
-              include: {
-                cliente: true
+              select: {
+                clienteId: true,
               }
             }
           }
@@ -34,8 +35,18 @@ export async function GET(request: NextRequest) {
         id: 'desc'
       }
     });
-    
-    return NextResponse.json(paquetes);
+
+    // Si clienteId fue enviado, filtrar en memoria
+    let paquetesFiltrados = paquetes;
+
+    if (clienteIdParam) {
+      const clienteId = parseInt(clienteIdParam);
+      paquetesFiltrados = paquetes.filter(p =>
+        p.detalles.some(det => det.factura?.clienteId === clienteId)
+      );
+    }
+
+    return NextResponse.json(paquetesFiltrados);
   } catch (error) {
     console.error('[PAQUETES_GET]', error);
     return new NextResponse('Error al obtener paquetes', { status: 500 });

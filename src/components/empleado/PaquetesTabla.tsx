@@ -48,6 +48,7 @@ type PaqueteCompleto = {
   estado: string;
   almacenCodigo: number;
   empleadoId: number;
+  clienteId?: number; // Añadido para filtrar por cliente
   envioNumero: number | null;
   almacen: Almacen;
   envio: Envio | null;
@@ -58,9 +59,12 @@ type PaqueteCompleto = {
   };
 };
 
+
+
 export default function PaquetesTabla() {
   const { user } = useAuth();
   const [paquetes, setPaquetes] = useState<PaqueteCompleto[]>([]);
+  const [filteredPaquetes, setFilteredPaquetes] = useState<PaqueteCompleto[]>([]);
   const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PaqueteCompleto | null>(null);
@@ -83,28 +87,41 @@ export default function PaquetesTabla() {
     empleadoId: user?.id || 0
   });
 
+  // Determinar si el usuario es cliente
+  const isCliente = user?.rol === 'cliente';
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
-        // Obtener paquetes con relaciones
-        const paquetesResponse = await fetch('/api/paquete?include=almacen,envio,empleado');
-        if (!paquetesResponse.ok) throw new Error('Error al obtener paquetes');
-        const paquetesData: PaqueteCompleto[] = await paquetesResponse.json();
-        setPaquetes(paquetesData);
-        
+        let paquetesData: PaqueteCompleto[] = [];
+        if (isCliente && user?.id) {
+          // Obtener solo los paquetes del cliente
+          const paquetesResponse = await fetch(`/api/paquete/cliente/${user.id}`);
+          if (!paquetesResponse.ok) throw new Error('Error al obtener paquetes del cliente');
+          paquetesData = await paquetesResponse.json();
+          setPaquetes(paquetesData);
+          setFilteredPaquetes(paquetesData);
+        } else {
+          // Obtener todos los paquetes (admin/empleado)
+          const paquetesResponse = await fetch('/api/paquete?include=almacen,envio,empleado');
+          if (!paquetesResponse.ok) throw new Error('Error al obtener paquetes');
+          paquetesData = await paquetesResponse.json();
+          setPaquetes(paquetesData);
+          setFilteredPaquetes(paquetesData);
+        }
+
         // Obtener almacenes
         const almacenesResponse = await fetch('/api/almacen');
         if (!almacenesResponse.ok) throw new Error('Error al obtener almacenes');
         const almacenesData: Almacen[] = await almacenesResponse.json();
         setAlmacenes(almacenesData);
-        
+
         // Establecer almacén por defecto
         if (almacenesData.length > 0 && formData.almacenCodigo === 0) {
           setFormData(prev => ({ ...prev, almacenCodigo: almacenesData[0].id }));
         }
-        
+
       } catch (error) {
         console.error("Error al cargar datos:", error);
         errorModal.openModal();
@@ -114,7 +131,7 @@ export default function PaquetesTabla() {
     };
 
     fetchData();
-  }, []);
+  }, [isCliente, user?.id]);
 
   useEffect(() => {
     // Calcular volumen automáticamente
@@ -126,6 +143,8 @@ export default function PaquetesTabla() {
   }, [formData.largo, formData.ancho, formData.alto]);
 
   const openDetailsModal = (paquete: PaqueteCompleto) => {
+    if (isCliente) return; // No permitir edición para clientes
+    
     setSelected(paquete);
     setFormData({
       descripcion: paquete.descripcion,
@@ -142,6 +161,8 @@ export default function PaquetesTabla() {
   };
 
   const openCreateModal = () => {
+    if (isCliente) return; // No permitir creación para clientes
+    
     setSelected(null);
     setFormData({
       descripcion: '',
@@ -158,6 +179,8 @@ export default function PaquetesTabla() {
   };
 
   const openDeleteModal = (paquete: PaqueteCompleto) => {
+    if (isCliente) return; // No permitir eliminación para clientes
+    
     setSelected(paquete);
     setIsDeleting(true);
   };
@@ -214,6 +237,15 @@ export default function PaquetesTabla() {
       const paquetesData = await paquetesResponse.json();
       setPaquetes(paquetesData);
 
+      // Filtrar nuevamente si es cliente
+      if (isCliente) {
+        const filtered = paquetesData.filter((paquete: PaqueteCompleto) => paquete.clienteId === user?.id);
+
+        setFilteredPaquetes(filtered);
+      } else {
+        setFilteredPaquetes(paquetesData);
+      }
+
       successModal.openModal();
       closeModal();
     } catch (error) {
@@ -233,10 +265,19 @@ export default function PaquetesTabla() {
       if (!response.ok) throw new Error('Error al eliminar el paquete');
 
       // Actualizar lista después de eliminar
-      const paquetesResponse = await fetch('/api/paquetes?include=almacen,envio,empleado');
+      const paquetesResponse = await fetch('/api/paquete?include=almacen,envio,empleado');
       if (!paquetesResponse.ok) throw new Error('Error al actualizar lista de paquetes');
       const paquetesData = await paquetesResponse.json();
       setPaquetes(paquetesData);
+
+      // Filtrar nuevamente si es cliente
+      if (isCliente) {
+       const filtered = paquetesData.filter((paquete: PaqueteCompleto) => paquete.clienteId === user?.id);
+
+        setFilteredPaquetes(filtered);
+      } else {
+        setFilteredPaquetes(paquetesData);
+      }
 
       successModal.openModal();
       closeModal();
@@ -266,28 +307,30 @@ export default function PaquetesTabla() {
               Gestión de Paquetes
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Listado completo de paquetes del sistema
+              {isCliente ? 'Tus paquetes' : 'Listado completo de paquetes del sistema'}
             </p>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={filterModal.openModal}
-            startIcon={<FilterIcon className="h-4 w-4" />}
-          >
-            Filtrar
-          </Button>
-          <Button 
-            size="sm" 
-            onClick={openCreateModal}
-            startIcon={<PlusIcon className="h-4 w-4" />}
-          >
-            Nuevo Paquete
-          </Button>
-        </div>
+        {!isCliente && (
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={filterModal.openModal}
+              startIcon={<FilterIcon className="h-4 w-4" />}
+            >
+              Filtrar
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={openCreateModal}
+              startIcon={<PlusIcon className="h-4 w-4" />}
+            >
+              Nuevo Paquete
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="max-w-full overflow-x-auto">
@@ -299,15 +342,15 @@ export default function PaquetesTabla() {
               <TableCell isHeader className="py-3">Ubicación</TableCell>
               <TableCell isHeader className="py-3">Envío</TableCell>
               <TableCell isHeader className="py-3">Estado</TableCell>
-              <TableCell isHeader className="py-3">Acciones</TableCell>
+              {!isCliente && <TableCell isHeader className="py-3">Acciones</TableCell>}
             </TableRow>
           </TableHeader>
 
           <TableBody className="divide-y divide-gray-300 dark:divide-gray-800">
-            {paquetes.map((paquete, index) => (
+            {filteredPaquetes.map((paquete, index) => (
               <TableRow key={paquete.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-800'}>
                 <TableCell className="text-sm font-semibold">
-                  PAQ-{paquete.id.toString().padStart(4, '0')}
+                  <div className="my-2">PAQ-{paquete.id.toString().padStart(4, '0')}</div>
                 </TableCell>
                 <TableCell className="text-sm text-gray-800 dark:text-gray-300">
                   {paquete.descripcion}
@@ -334,127 +377,131 @@ export default function PaquetesTabla() {
                     {paquete.estado}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  <div className="flex gap-2 my-1">
-                    <Button
-                      className="hover:bg-yellow-500 hover:text-white"
-                      variant="outline"
-                      size="xs"
-                      onClick={() => openDetailsModal(paquete)}
-                      startIcon={<PencilIcon className="w-4 h-4" />}
-                    >
-                    </Button>
-                    <Button
-                      className="hover:bg-red-500 hover:text-white"
-                      variant="outline"
-                      size="xs"
-                      onClick={() => openDeleteModal(paquete)}
-                      startIcon={<TrashIcon className="w-4 h-4" />}
-                    >
-                    </Button>
-                  </div>
-                </TableCell>
+                {!isCliente && (
+                  <TableCell>
+                    <div className="flex gap-2 my-1">
+                      <Button
+                        className="hover:bg-yellow-500 hover:text-white"
+                        variant="outline"
+                        size="xs"
+                        onClick={() => openDetailsModal(paquete)}
+                        startIcon={<PencilIcon className="w-4 h-4" />}
+                      >
+                      </Button>
+                      <Button
+                        className="hover:bg-red-500 hover:text-white"
+                        variant="outline"
+                        size="xs"
+                        onClick={() => openDeleteModal(paquete)}
+                        startIcon={<TrashIcon className="w-4 h-4" />}
+                      >
+                      </Button>
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
 
-      {/* Modal de creación/edición */}
-      <Modal isOpen={!!selected || isCreating} onClose={closeModal} className="max-w-2xl">
-        <div className="p-6 bg-white dark:bg-gray-900 rounded-xl">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white/90 flex items-center gap-2">
-            <PackageSearchIcon className="w-5 h-5" />
-            {isCreating ? 'Nuevo Paquete' : `Editar Paquete PKG-${selected?.id.toString().padStart(4, '0')}`}
-          </h2>
-          
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Información del Paquete</h3>
-                  <div className="space-y-3">
+      {/* Modal de creación/edición - Solo para no clientes */}
+      {!isCliente && (
+        <>
+          <Modal isOpen={!!selected || isCreating} onClose={closeModal} className="max-w-2xl">
+            <div className="p-6 bg-white dark:bg-gray-900 rounded-xl">
+              <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white/90 flex items-center gap-2">
+                <PackageSearchIcon className="w-5 h-5" />
+                {isCreating ? 'Nuevo Paquete' : `Editar Paquete PKG-${selected?.id.toString().padStart(4, '0')}`}
+              </h2>
+              
+              <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
-                      <Input
-                        name="descripcion"
-                        value={formData.descripcion}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Largo (cm)</label>
-                        <Input
-                          type="number"
-                          name="largo"
-                          value={formData.largo}
-                          onChange={handleInputChange}
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ancho (cm)</label>
-                        <Input
-                          type="number"
-                          name="ancho"
-                          value={formData.ancho}
-                          onChange={handleInputChange}
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alto (cm)</label>
-                        <Input
-                          type="number"
-                          name="alto"
-                          value={formData.alto}
-                          onChange={handleInputChange}
-                          min="0"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Peso (kg)</label>
-                        <Input
-                          type="number"
-                          name="peso"
-                          value={formData.peso}
-                          onChange={handleInputChange}
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Volumen (m³)</label>
-                        <Input
-                          type="number"
-                          name="volumen"
-                          value={formData.volumen}
-                          disabled
-                        />
+                      <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Información del Paquete</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
+                          <Input
+                            name="descripcion"
+                            value={formData.descripcion}
+                            onChange={handleInputChange}
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Largo (cm)</label>
+                            <Input
+                              type="number"
+                              name="largo"
+                              value={formData.largo}
+                              onChange={handleInputChange}
+                              min="0"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ancho (cm)</label>
+                            <Input
+                              type="number"
+                              name="ancho"
+                              value={formData.ancho}
+                              onChange={handleInputChange}
+                              min="0"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alto (cm)</label>
+                            <Input
+                              type="number"
+                              name="alto"
+                              value={formData.alto}
+                              onChange={handleInputChange}
+                              min="0"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Peso (kg)</label>
+                            <Input
+                              type="number"
+                              name="peso"
+                              value={formData.peso}
+                              onChange={handleInputChange}
+                              min="0"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Volumen (m³)</label>
+                            <Input
+                              type="number"
+                              name="volumen"
+                              value={formData.volumen}
+                              disabled
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Ubicación y Estado</h3>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Almacén</label>
-                      <Select
-                        options={almacenes.map(almacen => ({
-                          value: almacen.id.toString(),
-                          label: `${almacen.id}, ${almacen.pais}`
-                        }))}
-                        value={formData.almacenCodigo.toString()}
-                        onChange={(value) => handleSelectChange('almacenCodigo', value)}
-                      />
-                    </div>
-                    {!isCreating && (
+                      <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Ubicación y Estado</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Almacén</label>
+                          <Select
+                            options={almacenes.map(almacen => ({
+                              value: almacen.id.toString(),
+                              label: `${almacen.id}, ${almacen.pais}`
+                            }))}
+                            value={formData.almacenCodigo.toString()}
+                            onChange={(value) => handleSelectChange('almacenCodigo', value)}
+                          />
+                        </div>
+                        {!isCreating && (
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                               Estado
@@ -471,42 +518,44 @@ export default function PaquetesTabla() {
                             />
                           </div>
                         )}
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                <div className="flex justify-end gap-2 pt-6">
+                  <Button variant="outline" onClick={closeModal}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" variant="primary">
+                    {isCreating ? 'Crear Paquete' : 'Guardar Cambios'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </Modal>
+
+          {/* Modal de confirmación de eliminación */}
+          <Modal isOpen={isDeleting} onClose={closeModal} className="max-w-md">
+            <div className="p-6 bg-white dark:bg-gray-900 rounded-xl">
+              <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white/90">
+                Confirmar Eliminación
+              </h2>
+              <p className="mb-6">
+                ¿Estás seguro que deseas eliminar el paquete PKG-{selected?.id.toString().padStart(4, '0')}? Esta acción no se puede deshacer.
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={closeModal}>
+                  Cancelar
+                </Button>
+                <Button variant="primary" color="danger" onClick={handleDelete}>
+                  Eliminar
+                </Button>
               </div>
             </div>
-
-            <div className="flex justify-end gap-2 pt-6">
-              <Button variant="outline" onClick={closeModal}>
-                Cancelar
-              </Button>
-              <Button type="submit" variant="primary">
-                {isCreating ? 'Crear Paquete' : 'Guardar Cambios'}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </Modal>
-
-      {/* Modal de confirmación de eliminación */}
-      <Modal isOpen={isDeleting} onClose={closeModal} className="max-w-md">
-        <div className="p-6 bg-white dark:bg-gray-900 rounded-xl">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white/90">
-            Confirmar Eliminación
-          </h2>
-          <p className="mb-6">
-            ¿Estás seguro que deseas eliminar el paquete PKG-{selected?.id.toString().padStart(4, '0')}? Esta acción no se puede deshacer.
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={closeModal}>
-              Cancelar
-            </Button>
-            <Button variant="primary" color="danger" onClick={handleDelete}>
-              Eliminar
-            </Button>
-          </div>
-        </div>
-      </Modal>
+          </Modal>
+        </>
+      )}
 
       <Modal isOpen={successModal.isOpen} onClose={successModal.closeModal} className="max-w-[600px] p-5 lg:p-10">
         <div className="text-center">
