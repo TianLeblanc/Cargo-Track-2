@@ -37,6 +37,9 @@ interface Usuario {
 }
 
 export default function UsersTabla() {
+  // Estado para errores de validación y bloqueo de botón
+  const [errores, setErrores] = useState<{ [key: string]: string }>({});
+  const [enviando, setEnviando] = useState(false);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filter, setFilter] = useState<'all' | Rol>('all');
@@ -75,6 +78,28 @@ export default function UsersTabla() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    let error = '';
+    if (["p_nombre", "s_nombre", "p_apellido", "s_apellido"].includes(name)) {
+      if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]*$/.test(value)) {
+        error = "Solo letras y espacios";
+      }
+    }
+    if (name === "cedula") {
+      if (!/^\d*$/.test(value)) {
+        error = "Solo números";
+      }
+    }
+    if (name === "email") {
+      if (value && !/^\S+@\S+\.\S+$/.test(value)) {
+        error = "Correo inválido";
+      }
+    }
+    if (name === "telefono") {
+      if (value && !/^\d*$/.test(value)) {
+        error = "Solo números";
+      }
+    }
+    setErrores(prev => ({ ...prev, [name]: error }));
     setNuevoUsuario(prev => ({ ...prev, [name]: value }));
   };
 
@@ -83,35 +108,57 @@ export default function UsersTabla() {
   };
 
   const handleAgregarUsuario = async () => {
-  try {
-    console.log("Enviando usuario:", nuevoUsuario);
-
-    if (nuevoUsuario.id) {
-      const actualizado = await actualizarUsuario(nuevoUsuario.id, nuevoUsuario);
-      setUsuarios((prev) =>
-        prev.map((u) => (u.id === actualizado.id ? actualizado : u))
-      );
-    } else {
-      const creado = await crearUsuario(nuevoUsuario as Omit<Usuario, "id">);
-      setUsuarios((prev) => [...prev, creado]);
+    // Validación final antes de enviar
+    const nuevosErrores: { [key: string]: string } = {};
+    if (!nuevoUsuario.cedula || !/^\d+$/.test(nuevoUsuario.cedula)) {
+      nuevosErrores.cedula = "Cédula obligatoria y solo números";
     }
-
-    setIsModalOpen(false);
-    setNuevoUsuario({
-      cedula: "",
-      p_nombre: "",
-      s_nombre: "",
-      p_apellido: "",
-      s_apellido: "",
-      email: "",
-      telefono: "",
-      password: "",
-      rol: "cliente",
+    ["p_nombre", "p_apellido"].forEach((campo) => {
+      const valor = (nuevoUsuario as any)[campo] as string;
+      if (!valor || !/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$/.test(valor)) {
+        nuevosErrores[campo] = "Obligatorio y solo letras";
+      }
     });
-  } catch (error) {
-    console.error("Error al guardar el usuario:", error);
-  }
-};
+    if (nuevoUsuario.email && !/^\S+@\S+\.\S+$/.test(nuevoUsuario.email)) {
+      nuevosErrores.email = "Correo inválido";
+    }
+    if (nuevoUsuario.telefono && !/^\d+$/.test(nuevoUsuario.telefono)) {
+      nuevosErrores.telefono = "Solo números";
+    }
+    if (!nuevoUsuario.password) {
+      nuevosErrores.password = "Contraseña obligatoria";
+    }
+    setErrores(nuevosErrores);
+    if (Object.values(nuevosErrores).some(e => e)) return;
+    setEnviando(true);
+    try {
+      if (nuevoUsuario.id) {
+        const actualizado = await actualizarUsuario(nuevoUsuario.id, nuevoUsuario);
+        setUsuarios((prev) =>
+          prev.map((u) => (u.id === actualizado.id ? actualizado : u))
+        );
+      } else {
+        const creado = await crearUsuario(nuevoUsuario as Omit<Usuario, "id">);
+        setUsuarios((prev) => [...prev, creado]);
+      }
+      setIsModalOpen(false);
+      setNuevoUsuario({
+        cedula: "",
+        p_nombre: "",
+        s_nombre: "",
+        p_apellido: "",
+        s_apellido: "",
+        email: "",
+        telefono: "",
+        password: "",
+        rol: "cliente",
+      });
+    } catch (error) {
+      console.error("Error al guardar el usuario:", error);
+    } finally {
+      setEnviando(false);
+    }
+  };
 
 
   const handleEditarUsuario = (usuario: Usuario) => {
@@ -144,7 +191,21 @@ export default function UsersTabla() {
 
         <div className="flex items-center gap-3">
           <Button 
-            onClick={() => setIsModalOpen(true)} 
+            onClick={() => {
+              setNuevoUsuario({
+                cedula: "",
+                p_nombre: "",
+                s_nombre: "",
+                p_apellido: "",
+                s_apellido: "",
+                email: "",
+                telefono: "",
+                password: "",
+                rol: "cliente",
+              });
+              setErrores({});
+              setIsModalOpen(true);
+            }}
             className="hover:text-white hover:bg-green-600" 
             variant="outline"  
             size="sm"
@@ -210,34 +271,42 @@ export default function UsersTabla() {
                 <div>
                   <Label>Cédula</Label>
                   <Input name="cedula" value={nuevoUsuario.cedula || ""} onChange={handleInputChange} />
+                  {errores.cedula && <span className="text-xs text-red-500">{errores.cedula}</span>}
                 </div>
                 <div>
                   <Label>Primer Nombre</Label>
                   <Input name="p_nombre" value={nuevoUsuario.p_nombre || ""} onChange={handleInputChange} />
+                  {errores.p_nombre && <span className="text-xs text-red-500">{errores.p_nombre}</span>}
                 </div>
                 <div>
                   <Label>Segundo Nombre</Label>
                   <Input name="s_nombre" value={nuevoUsuario.s_nombre || ""} onChange={handleInputChange} />
+                  {errores.s_nombre && <span className="text-xs text-red-500">{errores.s_nombre}</span>}
                 </div>
                 <div>
                   <Label>Primer Apellido</Label>
                   <Input name="p_apellido" value={nuevoUsuario.p_apellido || ""} onChange={handleInputChange} />
+                  {errores.p_apellido && <span className="text-xs text-red-500">{errores.p_apellido}</span>}
                 </div>
                 <div>
                   <Label>Segundo Apellido</Label>
                   <Input name="s_apellido" value={nuevoUsuario.s_apellido || ""} onChange={handleInputChange} />
+                  {errores.s_apellido && <span className="text-xs text-red-500">{errores.s_apellido}</span>}
                 </div>
                 <div>
                   <Label>Email</Label>
                   <Input name="email" value={nuevoUsuario.email || ""} onChange={handleInputChange} />
+                  {errores.email && <span className="text-xs text-red-500">{errores.email}</span>}
                 </div>
                 <div>
                   <Label>Teléfono</Label>
                   <Input name="telefono" value={nuevoUsuario.telefono || ""} onChange={handleInputChange} />
+                  {errores.telefono && <span className="text-xs text-red-500">{errores.telefono}</span>}
                 </div>
                 <div>
                   <Label>Contraseña</Label>
                   <Input name="password" value={nuevoUsuario.password || ""} onChange={handleInputChange} />
+                  {errores.password && <span className="text-xs text-red-500">{errores.password}</span>}
                 </div>
                 <div>
                   <Label>Rol</Label>
@@ -256,8 +325,14 @@ export default function UsersTabla() {
             <Button size="sm" variant="outline" onClick={() => setIsModalOpen(false)}>
               Cancelar
             </Button>
-            <Button className="hover-bg" variant="outline" size="sm" onClick={handleAgregarUsuario}>
-              {nuevoUsuario.id ? "Guardar Cambios" : "Agregar Usuario"}
+            <Button
+              className="hover-bg"
+              variant="outline"
+              size="sm"
+              onClick={handleAgregarUsuario}
+              disabled={enviando}
+            >
+              {enviando ? "Procesando..." : nuevoUsuario.id ? "Guardar Cambios" : "Agregar Usuario"}
             </Button>
           </div>
         </div>

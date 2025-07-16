@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Table,
@@ -10,7 +11,7 @@ import Badge from "../ui/badge/Badge";
 import { Modal } from "../ui/modal";
 import Button from "@/components/ui/button/Button";
 import { PackageSearchIcon, FilterIcon, PlusIcon, TrashIcon, PencilIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useModal } from "@/hooks/useModal";
 import { useAuth } from "@/context/AuthContext";
 import Input from "@/components/form/input/InputField";
@@ -62,9 +63,15 @@ type PaqueteCompleto = {
 
 
 export default function PaquetesTabla() {
+  // Estado para bloquear botones de formularios
+  const [procesando, setProcesando] = useState(false);
   const { user } = useAuth();
   const [paquetes, setPaquetes] = useState<PaqueteCompleto[]>([]);
   const [filteredPaquetes, setFilteredPaquetes] = useState<PaqueteCompleto[]>([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [usuarios, setUsuarios] = useState<{ id: number; cedula: string }[]>([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PaqueteCompleto | null>(null);
@@ -77,14 +84,15 @@ export default function PaquetesTabla() {
 
   const [formData, setFormData] = useState({
     descripcion: '',
-    largo: 0,
-    ancho: 0,
-    alto: 0,
-    peso: 0,
-    volumen: 0,
+    largo: 0, // pulgadas
+    ancho: 0, // pulgadas
+    alto: 0,  // pulgadas
+    peso: 0,  // libras
+    volumen: 0, // pies cúbicos
     estado: 'recibido en almacen',
     almacenCodigo: 0,
-    empleadoId: user?.id || 0
+    empleadoId: user?.id || 0,
+    envioNumero: null as number | null
   });
 
   // Determinar si el usuario es cliente
@@ -95,6 +103,7 @@ export default function PaquetesTabla() {
       try {
         setLoading(true);
         let paquetesData: PaqueteCompleto[] = [];
+        let usuariosData: { id: number; cedula: string }[] = [];
         if (isCliente && user?.id) {
           // Obtener solo los paquetes del cliente
           const paquetesResponse = await fetch(`/api/paquete/cliente/${user.id}`);
@@ -109,6 +118,12 @@ export default function PaquetesTabla() {
           paquetesData = await paquetesResponse.json();
           setPaquetes(paquetesData);
           setFilteredPaquetes(paquetesData);
+          // Obtener usuarios para búsqueda por cédula
+          const usuariosResponse = await fetch('/api/usuarios');
+          if (usuariosResponse.ok) {
+            usuariosData = await usuariosResponse.json();
+            setUsuarios(usuariosData);
+          }
         }
 
         // Obtener almacenes
@@ -134,11 +149,11 @@ export default function PaquetesTabla() {
   }, [isCliente, user?.id]);
 
   useEffect(() => {
-    // Calcular volumen automáticamente
+    // Calcular volumen automáticamente en pies cúbicos
     const { largo, ancho, alto } = formData;
     setFormData(prev => ({
       ...prev,
-      volumen: (largo * ancho * alto) / 1000000
+      volumen: Math.round((largo * ancho * alto / 1728) * 1000) / 1000 // 3 decimales
     }));
   }, [formData.largo, formData.ancho, formData.alto]);
 
@@ -155,7 +170,8 @@ export default function PaquetesTabla() {
       volumen: paquete.volumen,
       estado: paquete.estado,
       almacenCodigo: paquete.almacenCodigo,
-      empleadoId: paquete.empleadoId
+      empleadoId: paquete.empleadoId,
+      envioNumero: paquete.envioNumero ?? null
     });
     setIsCreating(false);
   };
@@ -173,7 +189,8 @@ export default function PaquetesTabla() {
       volumen: 0,
       estado: 'En almacen',
       almacenCodigo: almacenes[0]?.id || 0,
-      empleadoId: user?.id || 0
+      empleadoId: user?.id || 0,
+      envioNumero: null
     });
     setIsCreating(true);
   };
@@ -210,7 +227,7 @@ export default function PaquetesTabla() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setProcesando(true);
     try {
       let response;
       if (isCreating) {
@@ -230,7 +247,6 @@ export default function PaquetesTabla() {
       if (!response?.ok) throw new Error('Error al guardar el paquete');
 
       const updatedPaquete = await response.json();
-      
       // Actualizar lista de paquetes
       const paquetesResponse = await fetch('/api/paquete?include=almacen,envio,empleado');
       if (!paquetesResponse.ok) throw new Error('Error al actualizar lista de paquetes');
@@ -240,7 +256,6 @@ export default function PaquetesTabla() {
       // Filtrar nuevamente si es cliente
       if (isCliente) {
         const filtered = paquetesData.filter((paquete: PaqueteCompleto) => paquete.clienteId === user?.id);
-
         setFilteredPaquetes(filtered);
       } else {
         setFilteredPaquetes(paquetesData);
@@ -251,12 +266,14 @@ export default function PaquetesTabla() {
     } catch (error) {
       console.error("Error al guardar paquete:", error);
       errorModal.openModal();
+    } finally {
+      setProcesando(false);
     }
   };
 
   const handleDelete = async () => {
     if (!selected) return;
-    
+    setProcesando(true);
     try {
       const response = await fetch(`/api/paquete/${selected.id}`, {
         method: 'DELETE'
@@ -273,7 +290,6 @@ export default function PaquetesTabla() {
       // Filtrar nuevamente si es cliente
       if (isCliente) {
        const filtered = paquetesData.filter((paquete: PaqueteCompleto) => paquete.clienteId === user?.id);
-
         setFilteredPaquetes(filtered);
       } else {
         setFilteredPaquetes(paquetesData);
@@ -284,6 +300,8 @@ export default function PaquetesTabla() {
     } catch (error) {
       console.error("Error al eliminar paquete:", error);
       errorModal.openModal();
+    } finally {
+      setProcesando(false);
     }
   };
 
@@ -312,22 +330,82 @@ export default function PaquetesTabla() {
           </div>
         </div>
 
+        {/* Navbar de búsqueda por cédula solo para admin/empleado */}
         {!isCliente && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0 max-w-full">
+            <div className="relative flex items-center gap-2">
+              {showSearch && (
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  className="ml-2 px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
+                  placeholder="Buscar por cédula..."
+                  value={searchTerm}
+                  onChange={async (e) => {
+                    setSearchTerm(e.target.value);
+                    const cedula = e.target.value.trim();
+                    if (cedula.length === 0) {
+                      setFilteredPaquetes(paquetes);
+                      return;
+                    }
+                    // Buscar usuario por coincidencia exacta de cédula
+                    const usuarioEncontrado = usuarios.find(u => u.cedula === cedula);
+                    if (usuarioEncontrado) {
+                      try {
+                        const res = await fetch(`/api/paquete/cliente/${usuarioEncontrado.id}`);
+                        if (res.ok) {
+                          const data = await res.json();
+                          setFilteredPaquetes(data);
+                        } else {
+                          setFilteredPaquetes([]);
+                        }
+                      } catch {
+                        setFilteredPaquetes([]);
+                      }
+                    } else {
+                      setFilteredPaquetes([]);
+                    }
+                  }}
+                  style={{ minWidth: 180, maxWidth: 250 }}
+                />
+              )}
+              <Button
+                onClick={() => {
+                  setShowSearch((prev) => !prev);
+                  setTimeout(() => {
+                    if (!showSearch && searchInputRef.current) {
+                      searchInputRef.current.focus();
+                    }
+                  }, 100);
+                }}
+                size="xs"
+                variant="outline"
+                className="hover:bg-sky-500 hover:text-white whitespace-nowrap"
+                startIcon={<PackageSearchIcon className="w-5 h-5"/>}
+              >
+              </Button>
+            </div>
             <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={filterModal.openModal}
-              startIcon={<FilterIcon className="h-4 w-4" />}
-            >
-              Filtrar
-            </Button>
-            <Button 
-              size="sm" 
               onClick={openCreateModal}
-              startIcon={<PlusIcon className="h-4 w-4" />}
+              className="hover:bg-green-500 hover:text-white whitespace-nowrap" 
+              size="xs"
+              variant="outline" 
+              startIcon={<PlusIcon className="w-5 h-5"/>}
             >
-              Nuevo Paquete
+              Agregar Paquete
+            </Button>
+            <Button
+              onClick={() => {
+                setSearchTerm("");
+                setShowSearch(false);
+                setFilteredPaquetes(paquetes);
+              }}
+              size="xs"
+              variant="outline"
+              className="hover:bg-gray-500 hover:text-white whitespace-nowrap"
+              startIcon={<PackageSearchIcon className="w-5 h-5"/>}
+            >
+              Ver todo
             </Button>
           </div>
         )}
@@ -430,55 +508,63 @@ export default function PaquetesTabla() {
                           />
                         </div>
                         <div className="grid grid-cols-3 gap-2">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Largo (cm)</label>
+                          <div className="flex flex-col justify-end h-full">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Largo (pulgadas)</label>
                             <Input
                               type="number"
                               name="largo"
                               value={formData.largo}
                               onChange={handleInputChange}
                               min="0"
+                              step={0.01}
+                              className="w-full"
                             />
                           </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ancho (cm)</label>
+                          <div className="flex flex-col justify-end h-full">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ancho (pulgadas)</label>
                             <Input
                               type="number"
                               name="ancho"
                               value={formData.ancho}
                               onChange={handleInputChange}
                               min="0"
+                              step={0.01}
+                              className="w-full"
                             />
                           </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alto (cm)</label>
+                          <div className="flex flex-col justify-end h-full">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alto (pulgadas)</label>
                             <Input
                               type="number"
                               name="alto"
                               value={formData.alto}
                               onChange={handleInputChange}
                               min="0"
+                              step={0.01}
+                              className="w-full"
                             />
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Peso (kg)</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Peso (libras)</label>
                             <Input
                               type="number"
                               name="peso"
                               value={formData.peso}
                               onChange={handleInputChange}
                               min="0"
+                              step={0.01}
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Volumen (m³)</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Volumen (ft³)</label>
                             <Input
                               type="number"
                               name="volumen"
                               value={formData.volumen}
                               disabled
+                              step={0.01}
                             />
                           </div>
                         </div>
@@ -524,11 +610,19 @@ export default function PaquetesTabla() {
                 </div>
 
                 <div className="flex justify-end gap-2 pt-6">
-                  <Button variant="outline" onClick={closeModal}>
+                  <Button variant="outline" onClick={closeModal} disabled={procesando}>
                     Cancelar
                   </Button>
-                  <Button type="submit" variant="primary">
-                    {isCreating ? 'Crear Paquete' : 'Guardar Cambios'}
+                  <Button type="submit" variant="primary" disabled={procesando}>
+                    {procesando
+                      ? (
+                        <span className="flex items-center gap-2 justify-center">
+                          <svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /></svg>
+                          Procesando...
+                        </span>
+                      )
+                      : (isCreating ? 'Crear Paquete' : 'Guardar Cambios')
+                    }
                   </Button>
                 </div>
               </form>
@@ -545,11 +639,19 @@ export default function PaquetesTabla() {
                 ¿Estás seguro que deseas eliminar el paquete PKG-{selected?.id.toString().padStart(4, '0')}? Esta acción no se puede deshacer.
               </p>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={closeModal}>
+                <Button variant="outline" onClick={closeModal} disabled={procesando}>
                   Cancelar
                 </Button>
-                <Button variant="primary" color="danger" onClick={handleDelete}>
-                  Eliminar
+                <Button variant="primary" color="danger" onClick={handleDelete} disabled={procesando}>
+                  {procesando
+                    ? (
+                      <span className="flex items-center gap-2 justify-center">
+                        <svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /></svg>
+                        Procesando...
+                      </span>
+                    )
+                    : 'Eliminar'
+                  }
                 </Button>
               </div>
             </div>

@@ -2,17 +2,18 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/bd';
 
 // GET /api/paquete/cliente/[clienteId]
-export async function GET(request: Request, { params }: { params: { clienteId: string } }) {
-  const clienteId = parseInt(params.clienteId);
+export async function GET(request: Request, context: { params: any }) {
+  const clienteId = parseInt(context.params.clienteId);
   if (isNaN(clienteId)) {
     return NextResponse.json({ error: 'ID de cliente inválido' }, { status: 400 });
   }
 
   try {
-    // Buscar todos los paquetes asociados al cliente mediante Factura y DetalleFactura
+    // Buscar todas las facturas del cliente y extraer los paquetes asociados
     const facturas = await prisma.factura.findMany({
       where: { clienteId },
       include: {
+        envio: true,
         detalles: {
           include: {
             paquete: {
@@ -27,12 +28,16 @@ export async function GET(request: Request, { params }: { params: { clienteId: s
       },
     });
 
-    // Extraer los paquetes únicos
+    // Extraer los paquetes y asociar el clienteId y datos de envío
     const paquetes: any[] = [];
     facturas.forEach((factura: any) => {
       factura.detalles.forEach((detalle: any) => {
         if (detalle.paquete) {
-          paquetes.push({ ...detalle.paquete, clienteId });
+          paquetes.push({
+            ...detalle.paquete,
+            clienteId: factura.clienteId,
+            envio: factura.envio || detalle.paquete.envio || null
+          });
         }
       });
     });
