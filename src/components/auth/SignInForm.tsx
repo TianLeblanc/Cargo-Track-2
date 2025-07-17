@@ -18,7 +18,7 @@ export default function SignInForm() {
   
   const { login } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
@@ -53,16 +53,15 @@ export default function SignInForm() {
     setIsLoading(false);
   };
 
+  // Si login fue exitoso
+  setIsLoading(false);
+};
+
+
+
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
       <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
-        {/* <Link
-          href="/"
-          className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-        >
-          <ChevronLeftIcon />
-          Volver al inicio
-        </Link> */}
       </div>
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>

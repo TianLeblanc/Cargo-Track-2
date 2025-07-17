@@ -47,17 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<Usuario | null>(null);
   const router = useRouter();
   const pathname = usePathname();
-  // Si estamos en /signin y no hay usuario en localStorage, no mostrar loading
-  const initialLoading = (() => {
-    if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('user');
-      if (!storedUser && (pathname === '/signin' || pathname === '/signup' || pathname === '/reset-password')) {
-        return false;
-      }
-    }
-    return true;
-  })();
-  const [isLoading, setIsLoading] = useState(initialLoading);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Cargar usuario desde localStorage al iniciar
   useEffect(() => {
@@ -126,9 +116,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!res.ok) {
       setIsLoading(false);
       // Lanzar error con status para que el formulario lo capture
-      const error: any = new Error(data.error || 'Error en login');
+      const error = new Error(data.error || 'Error en login') as Error & { status: number };
       error.status = res.status;
       throw error;
+
     }
 
     setUser(data.user);
