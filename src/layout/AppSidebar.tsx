@@ -40,7 +40,7 @@ const navItems: NavItem[] = [
     path: "/Tracking",
   },
   {
-    icon: <MailIcon />,
+    icon: <PlaneTakeoffIcon />,
     name: "Envios",
     path: "/Envios",
   },
@@ -50,13 +50,8 @@ const navItems: NavItem[] = [
     path: "/Facturas",
   },
   {
-    icon: <PlaneTakeoffIcon />,
-    name: "envios",
-    path: "/envio",
-  },
-  {
     icon: <WarehouseIcon />,
-    name: "Almacen",
+    name: "Almacenes",
     path: "/Almacenes",
   },
   {
@@ -67,7 +62,7 @@ const navItems: NavItem[] = [
   {
     icon: <UserCircleIcon />,
     name: "Perfil de Usuario",
-    path: "/profile",
+    path: "/Perfil",
   },
 ];
 
@@ -144,11 +139,10 @@ const AppSidebar: React.FC = () => {
     })
     .filter((item) => {
       if (item.subItems && item.subItems.length === 0) return false;
-      if (item.name === "Paquetes") return isCliente;
       if (item.name === "Facturas") return isAdmin||isEmpleado;
-      if (item.name === "Envios") return isCliente;
+     
       if (item.name === "Lista de Usuarios") return isAdmin||isEmpleado;
-      if (item.name === "Almacen") return isAdmin || isEmpleado;
+      if (item.name === "Almacen") return isAdmin;
       if (item.name === "envios") return isAdmin || isEmpleado;
       return true;
     });

@@ -6,6 +6,7 @@ import {
 import { useModal } from "@/hooks/useModal";
 import { Modal } from "../ui/modal";
 import Button from "@/components/ui/button/Button";
+import Pagination from "@/components/tables/Pagination";
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import PhoneInput from "@/components/form/group-input/PhoneInput";
@@ -31,6 +32,8 @@ const countries = [
 
 export default function AlmacenTabla() {
   const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   const [formData, setFormData] = useState({
     telefono: '',
     linea1: '',
@@ -47,6 +50,7 @@ export default function AlmacenTabla() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { isOpen, openModal, closeModal } = useModal();
 
@@ -67,13 +71,31 @@ export default function AlmacenTabla() {
     }
   };
 
+
+  // Solo números para teléfono
   const handlePhoneNumberChange = (phoneNumber: string) => {
-    setFormData({ ...formData, telefono: phoneNumber });
+    // Eliminar cualquier caracter que no sea número
+    const soloNumeros = phoneNumber.replace(/[^0-9]/g, '');
+    setFormData({ ...formData, telefono: soloNumeros });
   };
 
+  // Validaciones para inputs
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    let newValue = value;
+
+    // Solo letras, espacios y acentos para país, estado y ciudad
+    if (["pais", "estado", "ciudad"].includes(name)) {
+      // Permitir letras, espacios y acentos, sin caracteres especiales ni números
+      newValue = newValue.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, "");
+    }
+
+    // Solo números para código postal
+    if (name === "codpostal") {
+      newValue = newValue.replace(/[^0-9]/g, "");
+    }
+
+    setFormData({ ...formData, [name]: newValue });
   };
 
   const resetForm = () => {
@@ -109,6 +131,7 @@ export default function AlmacenTabla() {
   };
 
   const handleSubmit = async () => {
+    setIsProcessing(true);
     try {
       if (currentId) {
         await AlmacenService.update(currentId, formData);
@@ -123,6 +146,8 @@ export default function AlmacenTabla() {
     } catch (error) {
       alert("Error al guardar el almacén");
       console.error("Error al guardar:", error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -163,6 +188,19 @@ export default function AlmacenTabla() {
       almacen.codpostal.toLowerCase().includes(term)
     );
   });
+
+  // Paginación
+  const totalPages = Math.ceil(almacenesFiltrados.length / itemsPerPage) || 1;
+  const paginatedAlmacenes = almacenesFiltrados.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  useEffect(() => {
+    // Si el filtro reduce la cantidad de páginas, ajustar currentPage
+    if (currentPage > totalPages) setCurrentPage(1);
+    // eslint-disable-next-line
+  }, [almacenesFiltrados.length]);
 
   if (loading) {
     return (
@@ -278,11 +316,11 @@ export default function AlmacenTabla() {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => { closeModal(); resetForm(); }}>
+              <Button variant="outline" onClick={() => { closeModal(); resetForm(); }} disabled={isProcessing}>
                 Cancelar
               </Button>
-              <Button onClick={handleSubmit}>
-                {currentId ? "Guardar Cambios" : "Guardar"}
+              <Button onClick={handleSubmit} disabled={isProcessing} loading={isProcessing}>
+                {isProcessing ? "Procesando..." : (currentId ? "Guardar Cambios" : "Guardar")}
               </Button>
             </div>
           </div>
@@ -301,7 +339,7 @@ export default function AlmacenTabla() {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-300 dark:divide-gray-800">
-              {almacenesFiltrados.map((almacen, index) => (
+              {paginatedAlmacenes.map((almacen, index) => (
                 <TableRow key={almacen.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-800'}>
                   <TableCell className="text-sm font-semibold">ALM-{almacen.id}</TableCell>
                   <TableCell>
@@ -341,6 +379,14 @@ export default function AlmacenTabla() {
             </TableBody>
           </Table>
         </div>
+      {/* Paginación */}
+      <div className="flex justify-center mt-6">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      </div>
       </div>
 
       {/* Modal Confirmación Eliminar */}

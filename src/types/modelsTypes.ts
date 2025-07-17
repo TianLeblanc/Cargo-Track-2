@@ -18,6 +18,36 @@ export type Envio = {
   fechallegada?: Date | null;
 };
 
+export type EnvioCompleto ={
+  id: number;
+  numero: number;
+  tipo: string;
+  estado: string;
+  factura?: {
+    id: number;
+    numero: number;
+    estado: boolean;
+    metodoPago: string | null;
+    detallePago: string | null;
+    monto: number;
+    cantidadPiezas: number;
+    pdf?: string;
+    cliente: {
+      p_nombre: string;
+      p_apellido: string;
+    };
+    detalles: {
+      id: number;
+      monto: number;
+      paquete: {
+        descripcion: string;
+      };
+    }[];
+  };
+}
+
+
+
 export type PaqueteCompleto = {
   id: number;
   descripcion: string;
@@ -29,6 +59,7 @@ export type PaqueteCompleto = {
   estado: string;
   almacenCodigo: number;
   empleadoId: number;
+  clienteId?: number; // Añadido para filtrar por cliente
   envioNumero: number | null;
   almacen: Almacen;
   envio: Envio | null;

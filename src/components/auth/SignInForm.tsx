@@ -22,14 +22,35 @@ export default function SignInForm() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    
     try {
-      await login(email, password );
-    } catch (err) {
-      setError("Credenciales incorrectas. Por favor intente nuevamente.");
-    } finally {
+      await login(email, password);
+    } catch (err: any) {
+      let found401 = false;
+      // Si es un error tipo Response (fetch)
+      if (err instanceof Response) {
+        if (err.status === 401) {
+          setError("Usuario no encontrado. Verifique su email o regístrese.");
+          found401 = true;
+        }
+      }
+      // Si es un error tipo objeto (axios, custom, etc)
+      if (!found401 && err && typeof err === "object") {
+        if (err.response && err.response.status === 401) {
+          setError("Usuario no encontrado. Verifique su email o regístrese.");
+          found401 = true;
+        } else if (err.status === 401) {
+          setError("Usuario no encontrado. Verifique su email o regístrese.");
+          found401 = true;
+        }
+      }
+      // Si es string o no se detectó 401
+      if (!found401) {
+        setError("Credenciales incorrectas. Por favor intente nuevamente.");
+      }
       setIsLoading(false);
+      return;
     }
+    setIsLoading(false);
   };
 
   return (
@@ -123,7 +144,7 @@ export default function SignInForm() {
                   </span>
                 </div>
                 <Link
-                  href="/reset-password"
+                  href="/reset_password"
                   className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
                 >
                   ¿Olvidó la contraseña?

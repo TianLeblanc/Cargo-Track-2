@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import React from "react";
-import UsersTablaPrueba from "@/components/admin/UsersTabla Prueba";
+import UsersTabla from "@/components/admin/UsersTabla";
 import { ProtectedRoute } from "@/components/ProteccionRutas/ProteccionRuta";
 
 export const metadata: Metadata = {
@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 
 export default function Usuarios() {
   return (
-    <ProtectedRoute allowedRoles={["admin", "empleado"]}>
+    <ProtectedRoute allowedRoles={["admin"]}>
       <div className="grid grid-rows-12 gap-4 md:gap-6">
         
         <div className="col-span-12 xl:col-span-7">
-            <UsersTablaPrueba />
+            <UsersTabla />
         </div>
 
       </div>

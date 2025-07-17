@@ -33,6 +33,7 @@ interface AuthContextType {
     rol?: UserRole;
   }) => Promise<void>;
   logout: () => void;
+  updateUser: (userData: Partial<Usuario>) => void;
   hasRole: (roles: UserRole[]) => boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -44,9 +45,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<Usuario | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  // Si estamos en /signin y no hay usuario en localStorage, no mostrar loading
+  const initialLoading = (() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser && (pathname === '/signin' || pathname === '/signup' || pathname === '/reset-password')) {
+        return false;
+      }
+    }
+    return true;
+  })();
+  const [isLoading, setIsLoading] = useState(initialLoading);
 
   // Cargar usuario desde localStorage al iniciar
   useEffect(() => {
@@ -63,25 +74,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const updateUser = (userData: Partial<Usuario>) => {
+  if (!user) return;
+  
+  // Actualiza solo los campos proporcionados
+  const updatedUser = { ...user, ...userData };
+  
+  // Actualiza el estado y el localStorage
+  setUser(updatedUser);
+  localStorage.setItem('user', JSON.stringify(updatedUser));
+};
+
   // Verificar rol
   const hasRole = useCallback((roles: UserRole[]): boolean => {
     return user ? roles.includes(user.rol) : false;
   }, [user]);
 
+  
   // Redirección automática según login y rol
   useEffect(() => {
     if (isLoading) return;
 
     const authPages = ['/signin', '/signup', '/reset-password'];
-    const isAuthPage = authPages.includes(pathname);
+    // Normalizar pathname para evitar errores de coincidencia
+    const cleanPath = pathname?.split('?')[0] || '';
+    const isAuthPage = authPages.includes(cleanPath);
 
-    if (!user && !isAuthPage) {
+    // Solo redirigir a /signin si no estamos ya en /signin
+    if (!user && !isAuthPage && cleanPath !== '/signin') {
       router.push('/signin');
     } else if (user && isAuthPage) {
       const rolePaths: Record<UserRole, string> = {
         admin: '',
         empleado: '',
-        cliente: '/Tracking'
+        cliente: ''
       };
       router.push(rolePaths[user.rol] || '/');
     }
@@ -90,21 +116,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // 🔐 Login usando base de datos
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    try {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'login', email, password }),
-      });
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'login', email, password }),
+    });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error en login');
-
-      setUser(data.user);
-      localStorage.setItem('user', JSON.stringify(data.user));
-    } finally {
+    const data = await res.json();
+    if (!res.ok) {
       setIsLoading(false);
+      // Lanzar error con status para que el formulario lo capture
+      const error: any = new Error(data.error || 'Error en login');
+      error.status = res.status;
+      throw error;
     }
+
+    setUser(data.user);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    setIsLoading(false);
   };
 
   // 📝 Registro usando base de datos
@@ -180,6 +209,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isAdmin,
     isEmpleado,
     isCliente,
+    updateUser,
   };
 
   if (isLoading) {

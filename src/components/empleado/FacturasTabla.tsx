@@ -9,6 +9,7 @@ import {
 } from "../ui/table";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Pagination from "@/components/tables/Pagination";
 
 interface Factura {
   numero: number;
@@ -27,8 +28,10 @@ interface Factura {
 
 export default function FacturasTabla() {
   const [facturas, setFacturas] = useState<Factura[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   const [loading, setLoading] = useState(true);
-
+const [refreshKey, setRefreshKey] = useState(0);  
   useEffect(() => {
     const fetchFacturas = async () => {
       try {
@@ -46,7 +49,19 @@ export default function FacturasTabla() {
     };
 
     fetchFacturas();
-  }, []);
+  }, []);[refreshKey];
+
+  // Paginación
+  const totalPages = Math.ceil(facturas.length / itemsPerPage) || 1;
+  const paginatedFacturas = facturas.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+    // eslint-disable-next-line
+  }, [facturas.length]);
 
   if (loading) {
     return <div className="p-4">Cargando facturas...</div>;
@@ -68,8 +83,8 @@ export default function FacturasTabla() {
       <div className="max-w-full overflow-x-auto">
         <Table>
           <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
-            <TableRow>
-              <TableCell isHeader>ID</TableCell>
+            <TableRow className="text-sm text-left">
+              <TableCell isHeader className="py-3">ID</TableCell>
               <TableCell isHeader>Cliente</TableCell>
               <TableCell isHeader>Estado</TableCell>
               <TableCell isHeader>Monto</TableCell>
@@ -79,7 +94,7 @@ export default function FacturasTabla() {
           </TableHeader>
 
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {facturas.map((factura) => (
+            {paginatedFacturas.map((factura) => (
               <TableRow key={factura.numero}>
                 <TableCell className="py-3 font-medium">
                   FAC-{factura.numero.toString().padStart(4, '0')}
@@ -124,6 +139,14 @@ export default function FacturasTabla() {
             ))}
           </TableBody>
         </Table>
+      </div>
+      {/* Paginación */}
+      <div className="flex justify-center mt-6">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   );

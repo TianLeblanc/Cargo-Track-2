@@ -7,8 +7,11 @@ import Link from "next/link";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 
+type FormDataKeys = "p_name" | "s_name" | "p_apellido" | "s_apellido" | "email" | "password" | "cedula" | "telefono";
+type FormDataType = { [K in FormDataKeys]: string };
+
 export default function SignUpForm() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataType>({
     p_name: "",
     s_name: "",
     p_apellido: "",
@@ -18,6 +21,7 @@ export default function SignUpForm() {
     cedula: "",
     telefono: "",
   });
+  const [fieldErrors, setFieldErrors] = useState<{ [key in FormDataKeys]?: string }>({});
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,18 +32,38 @@ export default function SignUpForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    let error = "";
+    // Validar solo letras y espacios para nombres y apellidos
+    if (["p_name", "s_name", "p_apellido", "s_apellido"].includes(name)) {
+      if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]*$/.test(value)) {
+        error = "Solo letras y espacios";
+      }
+    }
+    setFieldErrors(prev => ({ ...prev, [name]: error }));
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError("");
 
+    // Validación de campos de nombre y apellido
+    const newErrors: { [key in FormDataKeys]?: string } = {};
+    ["p_name", "s_name", "p_apellido", "s_apellido"].forEach((field) => {
+      const typedField = field as FormDataKeys;
+      if (formData[typedField] && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$/.test(formData[typedField]) && typedField !== "s_name" && typedField !== "s_apellido") {
+        newErrors[typedField] = "Solo letras y espacios";
+      }
+    });
+    if (!formData.p_name.trim()) newErrors.p_name = "El primer nombre es obligatorio";
+    if (!formData.p_apellido.trim()) newErrors.p_apellido = "El primer apellido es obligatorio";
+    setFieldErrors(newErrors);
+    if (Object.values(newErrors).some(e => e)) return;
+
+    setIsLoading(true);
     try {
-      console.log("Enviando datos del formulario:", formData);
       await register({
-        email: formData.email,
+        email: formData.email.toLowerCase(),
         password: formData.password,
         cedula: formData.cedula,
         p_nombre: formData.p_name,
@@ -50,11 +74,9 @@ export default function SignUpForm() {
         rol: "cliente", // Rol por defecto
       });
       setShowSuccessModal(true); // Mostrar modal de éxito
-
     } catch (err) {
       console.error("Error en el registro:", err);
       setError("Error en el registro. Por favor intente nuevamente.");
-
     } finally {
       setIsLoading(false);
     }
@@ -102,19 +124,23 @@ export default function SignUpForm() {
                   <Label>Primer Nombre *</Label>
                   <Input
                     name="p_name"
+                    type="text"
                     value={formData.p_name}
                     onChange={handleChange}
                     placeholder="Ej: María"
                   />
+                  {fieldErrors.p_name && <span className="text-xs text-red-500">{fieldErrors.p_name}</span>}
                 </div>
                 <div>
                   <Label>Segundo Nombre</Label>
                   <Input
                     name="s_name"
+                    type="text"
                     value={formData.s_name}
                     onChange={handleChange}
                     placeholder="Ej: Alejandra"
                   />
+                  {fieldErrors.s_name && <span className="text-xs text-red-500">{fieldErrors.s_name}</span>}
                 </div>
               </div>
 
@@ -123,26 +149,33 @@ export default function SignUpForm() {
                   <Label>Primer Apellido *</Label>
                   <Input
                     name="p_apellido"
+                    type="text"
                     value={formData.p_apellido}
                     onChange={handleChange}
                     placeholder="Ej: Rodríguez"
                   />
+                  {fieldErrors.p_apellido && <span className="text-xs text-red-500">{fieldErrors.p_apellido}</span>}
                 </div>
                 <div>
                   <Label>Segundo Apellido</Label>
                   <Input
                     name="s_apellido"
+                    type="text"
                     value={formData.s_apellido}
                     onChange={handleChange}
                     placeholder="Ej: Pérez"
                   />
+                  {fieldErrors.s_apellido && <span className="text-xs text-red-500">{fieldErrors.s_apellido}</span>}
                 </div>
               </div>
 
-              <div>
+               <div>
                 <Label>Cédula *</Label>
                 <Input
                   name="cedula"
+                  type="number"
+                  min="1000000"
+                  max="99999999"
                   value={formData.cedula}
                   onChange={handleChange}
                   placeholder="Ej: 12345678"
@@ -153,6 +186,7 @@ export default function SignUpForm() {
                 <Label>Teléfono *</Label>
                 <Input
                   name="telefono"
+                  type="number"
                   value={formData.telefono}
                   onChange={handleChange}
                   placeholder="Ej: 04141234567"
@@ -199,7 +233,7 @@ export default function SignUpForm() {
                   className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-50"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Registrando..." : "Registrarse"}
+                  {isLoading ? "Procesando..." : "Registrarse"}
                 </button>
               </div>
             </div>

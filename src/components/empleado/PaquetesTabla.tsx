@@ -10,56 +10,15 @@ import {
 import Badge from "../ui/badge/Badge";
 import { Modal } from "../ui/modal";
 import Button from "@/components/ui/button/Button";
-import { PackageSearchIcon, FilterIcon, PlusIcon, TrashIcon, PencilIcon } from "lucide-react";
+import { PackageSearchIcon, FilterIcon, PlusIcon, TrashIcon, PencilIcon, ListIcon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useModal } from "@/hooks/useModal";
 import { useAuth } from "@/context/AuthContext";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import Pagination from "@/components/tables/Pagination";
 
-// Definición completa de tipos
-type Almacen = {
-  id: number;
-  ciudad: string;
-  estado: string;
-  linea1: string;
-  linea2?: string | null;
-  pais: string;
-  codpostal: string;
-  telefono: string;
-};
-
-type Envio = {
-  numero: number;
-  estado: string;
-  origen: Almacen;
-  destino: Almacen;
-  fechasalida: Date;
-  fechallegada?: Date | null;
-};
-
-type PaqueteCompleto = {
-  id: number;
-  descripcion: string;
-  largo: number;
-  ancho: number;
-  alto: number;
-  peso: number;
-  volumen: number;
-  estado: string;
-  almacenCodigo: number;
-  empleadoId: number;
-  clienteId?: number; // Añadido para filtrar por cliente
-  envioNumero: number | null;
-  almacen: Almacen;
-  envio: Envio | null;
-  empleado: {
-    id: number;
-    nombre: string;
-    email: string;
-  };
-};
-
+import { PaqueteCompleto, Almacen, Envio } from '@/types/modelsTypes';
 
 
 export default function PaquetesTabla() {
@@ -81,6 +40,16 @@ export default function PaquetesTabla() {
   const successModal = useModal();
   const errorModal = useModal();
   const filterModal = useModal();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(filteredPaquetes.length / itemsPerPage);
+  const paginatedPaquetes = filteredPaquetes.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
 
   const [formData, setFormData] = useState({
     descripcion: '',
@@ -403,7 +372,7 @@ export default function PaquetesTabla() {
               size="xs"
               variant="outline"
               className="hover:bg-gray-500 hover:text-white whitespace-nowrap"
-              startIcon={<PackageSearchIcon className="w-5 h-5"/>}
+              startIcon={<ListIcon className="w-5 h-5"/>}
             >
               Ver todo
             </Button>
@@ -425,7 +394,7 @@ export default function PaquetesTabla() {
           </TableHeader>
 
           <TableBody className="divide-y divide-gray-300 dark:divide-gray-800">
-            {filteredPaquetes.map((paquete, index) => (
+            {paginatedPaquetes.map((paquete, index) => (
               <TableRow key={paquete.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-800'}>
                 <TableCell className="text-sm font-semibold">
                   <div className="my-2">PAQ-{paquete.id.toString().padStart(4, '0')}</div>
@@ -481,6 +450,14 @@ export default function PaquetesTabla() {
             ))}
           </TableBody>
         </Table>
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
+        </div>
+
       </div>
 
       {/* Modal de creación/edición - Solo para no clientes */}

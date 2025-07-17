@@ -9,9 +9,9 @@ import Button from "@/components/ui/button/Button";
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import Select from "@/components/form/Select";
-import { PencilIcon, TrashIcon, PackagePlusIcon, PlaneIcon, ShipIcon, PlusIcon } from "lucide-react";
-import { CheckCircleIcon } from "@/icons";
-import { useEffect, useState } from "react";
+import { PencilIcon, TrashIcon, PackagePlusIcon, PlaneIcon, ShipIcon, PlusIcon, SearchIcon, ListIcon } from "lucide-react";
+import Pagination from "@/components/tables/Pagination";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import DatePicker from "@/components/form/date-picker";
 import Badge from "../ui/badge/Badge";
@@ -65,6 +65,12 @@ interface Usuario {
 export default function EnvioTabla() {
   const { user } = useAuth();
   const [envios, setEnvios] = useState<Envio[]>([]);
+  const [filteredEnvios, setFilteredEnvios] = useState<Envio[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
   const [paquetesDisponibles, setPaquetesDisponibles] = useState<Paquete[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -98,6 +104,12 @@ export default function EnvioTabla() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Mantener sincronizado el filtro con los datos
+  useEffect(() => {
+    setFilteredEnvios(envios);
+    setCurrentPage(1);
+  }, [envios]);
 
   const fetchData = async () => {
   try {
@@ -421,6 +433,18 @@ export default function EnvioTabla() {
     }
   };
 
+  // Paginación
+  const totalPages = Math.ceil(filteredEnvios.length / itemsPerPage) || 1;
+  const paginatedEnvios = filteredEnvios.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+    // eslint-disable-next-line
+  }, [filteredEnvios.length]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -434,17 +458,108 @@ export default function EnvioTabla() {
       <div className="p-6">
         <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-bold text-gray-800 dark:text-white">Gestión de Envíos</h2>
-          {user?.rol === "admin" && (
-            <Button 
-              onClick={handleOpenCreate}
-              className="hover:bg-sky-500 hover:text-white"
-              size="sm" 
-              variant="outline" 
-              startIcon={<PlusIcon />}
+          <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0 max-w-full">
+            {/* Barra de búsqueda por cédula */}
+            <div className="relative flex items-center gap-2">
+              {showSearch && (
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  className="ml-2 px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
+                  placeholder="Buscar envíos por cédula..."
+                  value={searchTerm}
+                  onChange={async (e) => {
+                    setSearchTerm(e.target.value);
+                    const cedula = e.target.value.trim();
+                    if (cedula.length === 0) {
+                      setFilteredEnvios(envios);
+                      return;
+                    }
+                    // Buscar usuario por coincidencia exacta de cédula o email
+                    let usuarioEncontrado = null;
+                    const cedulaBuscada = cedula.replace(/\s+/g, '').toLowerCase();
+                    for (const u of usuarios) {
+                      // Buscar por email (insensible a mayúsculas y espacios)
+                      if (u.email.replace(/\s+/g, '').toLowerCase() === cedulaBuscada) {
+                        usuarioEncontrado = u;
+                        break;
+                      }
+                      // Buscar por cédula si existe (insensible a mayúsculas y espacios)
+                      if (typeof (u as any).cedula === 'string' && (u as any).cedula.replace(/\s+/g, '').toLowerCase() === cedulaBuscada) {
+                        usuarioEncontrado = u;
+                        break;
+                      }
+                    }
+                    console.log('Buscando usuario por cédula/email:', cedula, 'Encontrado:', usuarioEncontrado);
+                    if (usuarioEncontrado) {
+                      try {
+                        // Buscar facturas de ese cliente (usuario)
+                        const res = await fetch(`/api/factura/cliente/${usuarioEncontrado.id}`);
+                        if (res.ok) {
+                          const facturas = await res.json();
+                          console.log('Facturas encontradas:', facturas);
+                          // Extraer los números de envío de las facturas (soportar array vacío)
+                          const numerosEnvio = Array.isArray(facturas) ? facturas.map((f: any) => f.envioNumero).filter((n: any) => n != null) : [];
+                          console.log('Números de envío extraídos:', numerosEnvio);
+                          // Filtrar los envíos que correspondan
+                          const enviosFiltrados = envios.filter(e => numerosEnvio.includes(e.numero));
+                          console.log('Envíos filtrados:', enviosFiltrados);
+                          setFilteredEnvios(enviosFiltrados.length > 0 ? enviosFiltrados : []);
+                        } else {
+                          setFilteredEnvios([]);
+                        }
+                      } catch (err) {
+                        console.error('Error al buscar facturas:', err);
+                        setFilteredEnvios([]);
+                      }
+                    } else {
+                      setFilteredEnvios([]);
+                    }
+                  }}
+                  style={{ minWidth: 180, maxWidth: 250 }}
+                />
+              )}
+              <Button
+                onClick={() => {
+                  setShowSearch((prev) => !prev);
+                  setTimeout(() => {
+                    if (!showSearch && searchInputRef.current) {
+                      searchInputRef.current.focus();
+                    }
+                  }, 100);
+                }}
+                size="xs"
+                variant="outline"
+                className="hover:bg-sky-500 hover:text-white whitespace-nowrap"
+                startIcon={<SearchIcon className="w-5 h-5" />}
+              >
+              </Button>
+            </div>
+            {user?.rol === "admin" && (
+              <Button 
+                onClick={handleOpenCreate}
+                className="hover:bg-sky-500 hover:text-white"
+                size="xs" 
+                variant="outline" 
+                startIcon={<PlusIcon className="w-5 h-5"/>}
+              >
+                Crear Envío
+              </Button>
+            )}
+            <Button
+              onClick={() => {
+                setSearchTerm("");
+                setShowSearch(false);
+                setFilteredEnvios(envios);
+              }}
+              size="xs"
+              variant="outline"
+              className="hover:bg-gray-500 hover:text-white whitespace-nowrap"
+              startIcon={<ListIcon className="w-5 h-5" />}
             >
-              Crear Envío
+              Ver todo
             </Button>
-          )}
+          </div>
         </div>
 
         {/* Modal Crear/Editar */}
@@ -624,7 +739,7 @@ export default function EnvioTabla() {
               </TableRow>
             </TableHeader>
             <TableBody className="text-left divide-y divide-gray-200">
-              {envios.map((envio, index) => (
+              {paginatedEnvios.map((envio, index) => (
                 <TableRow key={envio.numero} className={index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-800'}>
                   <TableCell className="text-sm font-semibold">ENV-{envio.numero}</TableCell>
                   <TableCell>
@@ -704,6 +819,14 @@ export default function EnvioTabla() {
             </TableBody>
           </Table>
         </div>
+      {/* Paginación */}
+      <div className="flex justify-center mt-6">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      </div>
       </div>
 
       {/* Modal Confirmación Eliminar */}
