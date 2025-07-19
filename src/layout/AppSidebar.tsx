@@ -142,8 +142,7 @@ const AppSidebar: React.FC = () => {
       if (item.name === "Facturas") return isAdmin||isEmpleado;
      
       if (item.name === "Lista de Usuarios") return isAdmin||isEmpleado;
-      if (item.name === "Almacen") return isAdmin;
-      if (item.name === "envios") return isAdmin || isEmpleado;
+      if (item.name === "Almacenes") return isAdmin;
       return true;
     });
 

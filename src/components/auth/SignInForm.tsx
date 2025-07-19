@@ -53,11 +53,6 @@ export default function SignInForm() {
     setIsLoading(false);
   };
 
-  // Si login fue exitoso
-  setIsLoading(false);
-};
-
-
 
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">

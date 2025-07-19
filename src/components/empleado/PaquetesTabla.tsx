@@ -115,7 +115,7 @@ export default function PaquetesTabla() {
     };
 
     fetchData();
-  }, [isCliente, user?.id]);
+  }, [user?.id]);
 
   useEffect(() => {
     // Calcular volumen automáticamente en pies cúbicos

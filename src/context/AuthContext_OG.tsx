@@ -1,14 +1,7 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-  useCallback,
-} from 'react';
-import { useRouter } from 'next/navigation';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 
 type UserRole = 'admin' | 'empleado' | 'cliente';
 
@@ -52,20 +45,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<Usuario | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
+  const [isLoading, setIsLoading] = useState(true);
 
-  // ✅ Cargar desde localStorage (solo en cliente)
+  // Cargar usuario desde localStorage al iniciar
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
     try {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
-    } catch (err) {
-      console.error('Error leyendo localStorage:', err);
+    } catch (error) {
+      console.error('Error cargando usuario', error);
       localStorage.removeItem('user');
     } finally {
       setIsLoading(false);
@@ -73,68 +65,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const updateUser = (userData: Partial<Usuario>) => {
-    if (!user) return;
-    const updatedUser = { ...user, ...userData };
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-  };
+  if (!user) return;
+  
+  // Actualiza solo los campos proporcionados
+  const updatedUser = { ...user, ...userData };
+  
+  // Actualiza el estado y el localStorage
+  setUser(updatedUser);
+  localStorage.setItem('user', JSON.stringify(updatedUser));
+};
 
-  const hasRole = useCallback(
-    (roles: UserRole[]): boolean => !!user && roles.includes(user.rol),
-    [user]
-  );
+  // Verificar rol
+  const hasRole = useCallback((roles: UserRole[]): boolean => {
+    return user ? roles.includes(user.rol) : false;
+  }, [user]);
 
-  // ✅ Redirección segura por rol y autenticación
+  
+  // Redirección automática según login y rol
   useEffect(() => {
-    if (typeof window === 'undefined' || isLoading) return;
+    if (isLoading) return;
 
-    const currentPath = window.location.pathname;
     const authPages = ['/signin', '/signup', '/reset-password'];
-    const isAuthPage = authPages.includes(currentPath);
+    // Normalizar pathname para evitar errores de coincidencia
+    const cleanPath = pathname?.split('?')[0] || '';
+    const isAuthPage = authPages.includes(cleanPath);
 
-    if (!user && !isAuthPage) {
-      router.replace('/signin');
-    }
-
-    if (user && isAuthPage) {
+    // Solo redirigir a /signin si no estamos ya en /signin
+    if (!user && !isAuthPage && cleanPath !== '/signin') {
+      router.push('/signin');
+    } else if (user && isAuthPage) {
       const rolePaths: Record<UserRole, string> = {
-        admin: '/Almacenes',
-        empleado: '/Paquete',
-        cliente: '/Envios',
+        admin: '',
+        empleado: '',
+        cliente: ''
       };
-      const target = rolePaths[user.rol] || '/';
-      if (currentPath !== target) {
-        router.replace(target);
-      }
+      router.push(rolePaths[user.rol] || '/');
     }
-  }, [user, isLoading, router]);
+  }, [user, pathname, isLoading, router]);
 
+  // 🔐 Login usando base de datos
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    try {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'login', email, password }),
-      });
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'login', email, password }),
+    });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        const error = new Error(data.error || 'Error en login') as Error & {
-          status: number;
-        };
-        error.status = res.status;
-        throw error;
-      }
-
-      setUser(data.user);
-      localStorage.setItem('user', JSON.stringify(data.user));
-    } finally {
+    const data = await res.json();
+    if (!res.ok) {
       setIsLoading(false);
+      // Lanzar error con status para que el formulario lo capture
+      const error = new Error(data.error || 'Error en login') as Error & { status: number };
+      error.status = res.status;
+      throw error;
+
     }
+
+    setUser(data.user);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    setIsLoading(false);
   };
 
+  // 📝 Registro usando base de datos
   const register = async ({
     email,
     password,
@@ -152,7 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     p_nombre: string;
     s_nombre: string;
     p_apellido: string;
-    s_apellido: string;
+    s_apellido: string; 
     telefono: string;
     rol?: UserRole;
   }) => {
@@ -174,7 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           rol,
         }),
       });
-
+      
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error en registro');
 
@@ -191,25 +184,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/signin');
   };
 
+  const isAuthenticated = !!user;
+  const isAdmin = hasRole(['admin']);
+  const isEmpleado = hasRole(['empleado']);
+  const isCliente = hasRole(['cliente']);
+
   const contextValue: AuthContextType = {
     user,
     isLoading,
     login,
     register,
     logout,
-    updateUser,
     hasRole,
-    isAuthenticated: !!user,
-    isAdmin: hasRole(['admin']),
-    isEmpleado: hasRole(['empleado']),
-    isCliente: hasRole(['cliente']),
+    isAuthenticated,
+    isAdmin,
+    isEmpleado,
+    isCliente,
+    updateUser,
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Cargando...</div>;
+  }
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): AuthContextType => {

@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/bd';
 
 // GET /api/paquete/cliente/[clienteId]
-export async function GET(request: Request, context: { params: any }) {
-  const clienteId = parseInt(context.params.clienteId);
+export async function GET(
+  request: Request,
+  { params }: { params: { clienteId: string } }
+) {
+  const clienteId = parseInt(params.clienteId);
   if (isNaN(clienteId)) {
     return NextResponse.json({ error: 'ID de cliente inválido' }, { status: 400 });
   }
@@ -36,7 +39,7 @@ export async function GET(request: Request, context: { params: any }) {
           paquetes.push({
             ...detalle.paquete,
             clienteId: factura.clienteId,
-            envio: factura.envio || detalle.paquete.envio || null
+            envio: factura.envio || detalle.paquete.envio || null,
           });
         }
       });
@@ -45,6 +48,9 @@ export async function GET(request: Request, context: { params: any }) {
     return NextResponse.json(paquetes);
   } catch (error) {
     console.error('Error al obtener paquetes del cliente:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
   }
 }
